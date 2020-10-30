@@ -17,10 +17,20 @@ Running automated tests against Excel does introduce complications:
 This tutorial will introduce the Excel-DNA testing helper, and show you how to create a test project for your Excel model or add-in.
 
 ## Background and prerequisites
-* Visual Studio
+* Visual Studio and Excel
+
+
 * xUnit
+[xUnit](https://xunit.net/) is a unit testing tool for the .NET Framework. 
+
+If you are not familiar with unit test frameworks, or with xUnit in particular, you might want to look at or work through the XUnit Getting Started instructions for 
+[Using .NET Framework with Visual Studio](https://xunit.net/docs/getting-started/netfx/visual-studio).
+
+
+
 
 ## Creating a test project
+The test project 
 
 ## Testing example
 
