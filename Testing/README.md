@@ -31,16 +31,25 @@ If you are not familiar with unit test frameworks, or with xUnit in particular, 
 [Using .NET Framework with Visual Studio](https://xunit.net/docs/getting-started/netfx/visual-studio).
 
 ## Creating a test project
-The test project is created as a 'Class Library (.NET Framework)' project (using C# or Visual Basic) and then installing the `ExcelDna.Testing` package from the NuGet package manager (currently a pre-release package, so check the 
+A new test project is started by:
+* creating a new  'Class Library (.NET Framework)' project (using C# or Visual Basic) and
+* installing the `ExcelDna.Testing` package from the NuGet package manager (currently a pre-release package, so check the relevant checkbox or add the `-Pre` flag to the NuGet command line).
 
-## Testing example
+After installing the `ExcelDna.Testing` package, the project will have the xUnit framework and Visual Studio runner for xUnit installed, so no additional packages are needed.
+
+## Testing examples
+
+### *ExcelTest* - A simple Excel test
+
+This is a simple test the exercises Excel to 
+
 ```c#
 using Xunit;
 using ExcelDna.Testing;
 
 [assembly:TestFramework("Xunit.ExcelTestFramework", "ExcelDna.Testing")]
 
-namespace MyExcelTests
+namespace ExcelTest
 {
     public class CalculationTests
     {
@@ -67,12 +76,20 @@ namespace MyExcelTests
 }
 ```
 
-### Discussion
+To run the tests in Visual Studio, open the Test Explorer tool window, check that the test is correctly discovered, and press Run.
+
+#### Discussion
 
 Some notable aspects of the above code snippet:
 * The `Xunit.ExcelTestFramework` is configured through the `Xunit.TestFramework` assembly-scope attribute.
 * Tests are public instance methods marked by an `[ExcelDna.Testing.ExcelFact]` attribute.
 * Test code can access Excel `Application` object with a call to `ExcelDna.Testing.Util.Application`. This will refer to the correct Excel root COM object, whether the test code is running in-process or out-of-process (see below).
+
+### *AddInTest* - Testing an add-in
+
+For this test project we create a simple Excel-DNA add-in with a single UDF, and then implement a test project that exercises the add-in function inside Excel.
+
+> TODO
 
 ## Solution layout suggestion
 
