@@ -49,6 +49,7 @@ using Xunit;
 using Microsoft.Office.Interop.Excel;
 using ExcelDna.Testing;
 
+// This attribute MUST be present somewhere in the test project to connect xUnit to the ExcelDna.Testing framework.
 [assembly: TestFramework("Xunit.ExcelTestFramework", "ExcelDna.Testing")]
 
 namespace ExcelTest
@@ -104,16 +105,106 @@ Some notable aspects of the above code snippet:
 
 For this test project we create a simple Excel-DNA add-in with a single UDF, and then implement a test project that exercises the add-in function inside Excel.
 
-> TODO
+```c#
+using System;
+using Xunit;
+using ExcelDna.Testing;
+using Microsoft.Office.Interop.Excel;
+
+// This attribute MUST be present somewhere in the test project to connect xUnit to the ExcelDna.Testing framework.
+// It could also be placed in the Properties\AssemblyInfo.cs file.
+[assembly:Xunit.TestFramework("Xunit.ExcelTestFramework", "ExcelDna.Testing")]
+
+namespace Sample.Test
+{
+    // The path give here is relative to the output directory of the test project.
+    // Setting an AddIn options here will request the test runner to load this add-in into Excel before the tests start.
+    // The name here excludes the ".xll" or "64.xll" suffix. The test runner will choose according to the Excel bitness where it runs.
+    [ExcelTestSettings(AddIn = @"..\..\..\Sample\bin\Debug\Sample-AddIn")]
+    public class ExcelTests : IDisposable
+    {
+        // This workbook will be available to all tests in the class
+        Workbook _testWorkbook;
+
+        // The test class constructor will configure the required environment for the tests in the class.
+        // In this case it creates a new Workbook that will be shared by the tests
+        public ExcelTests()
+        {
+            var app = Util.Application;
+            _testWorkbook = app.Workbooks.Add();
+        }
+
+        // Clean-up for the class is in the IDisposable.Dispose implementation
+        public void Dispose()
+        {
+            _testWorkbook.Close(SaveChanges: false);
+        }
+
+        // This test just interacts with Excel
+        [ExcelFact]
+        public void ExcelCanAddNumbers()
+        {
+            var ws = _testWorkbook.Sheets[1];
+
+            ws.Range["A1"].Value = 2.0;
+            ws.Range["A2"].Value = 3.0;
+            ws.Range["A3"].Formula = "=A1 + A2";
+
+            var result = ws.Range["A3"].Value;
+
+            Assert.Equal(5.0, result);
+        }
+
+        // This test depends on the AddIn value set in the class's ExcelTestSettings attributes
+        // With the Sample-AddIn loaded, the function should work correctly.
+        [ExcelFact]
+        public void AddInCanAddNumbers()
+        {
+            var ws = _testWorkbook.Sheets[1];
+
+            ws.Range["A1"].Value = 2.0;
+            ws.Range["A2"].Value = 3.0;
+            ws.Range["A3"].Formula = "=AddThem(A1, A2)";
+
+            var result = ws.Range["A3"].Value;
+
+            Assert.Equal(5.0, result);
+        }
+
+        // Before this test is run, a pre-created workbook will be loaded
+        // It has been added to the test project and configured to always be copied to the output directory
+        [ExcelFact(Workbook = "TestBook.xlsx")]
+        public void WorkbookCheckIsOK()
+        {
+            // Get the pre-loaded workbook using the Util.Workbook property
+            var wb = Util.Workbook;
+            var ws = wb.Sheets["Check"];
+            Util.Application.CalculateFull();
+
+            var result = ws.Range["A1"].Value;
+
+            Assert.Equal("OK", result);
+        }
+    }
+}
+
+```
+
+#### Discussion
+
+This snippet is from the accompanying sample solution, which also contains an Excel-DNA add-in project (creating the `Sample-AddIn` add-in referred to in the `ExcelTestSettings` attribute.
+The add-in contains a single function called `AddThem` which is given a first test in the sample test project.
+
+Note that the sample test project does not reference the add-in project - all interaction is through Excel. This ensures that we are truly testing the behaviour of the add-in when running in Excel.
 
 ## Solution layout suggestion
 
 For supporting both isolated unit testing and Excel-based integration testing, one possible solution layout is as follows:
 
-* **Library** - contains the core functionality, e.g. calculations or external data access methods. Does not reference Excel-DNA or Excel.
-* **Library.Test** - unit test project for the functionality in `Library`, using the standard `xunit` and `xunit.runner.visualstudio` packages as described in the [xUnit documentation](https://xunit.net/docs/getting-started/netfx/visual-studio).
-* **AddIn** - Excel AddIn to integrate the functionality from `Library` into Excel, using the `ExcelDna.AddIn` package. Functions declared here contain Excel-specific attributes and information, and deal with the Excel data types and error values if needed before calling into 'Library' methods.
-* **AddIn.Test** - integration testing project for 'AddIn', using the `ExcelDna.Testing` package.
+* **MyLibrary** - contains the core functionality, e.g. calculations or external data access methods. Does not reference Excel-DNA or Excel.
+* **MyLibrary.Test** - unit test project for the functionality in `MyLibrary`, using the standard `xunit` and `xunit.runner.visualstudio` packages as described in the [xUnit documentation](https://xunit.net/docs/getting-started/netfx/visual-studio).
+* **MyAddIn** - Excel AddIn to integrate the functionality from `MyLibrary` into Excel, using the `ExcelDna.AddIn` package. Functions declared here contain Excel-specific attributes and information, and deal with the Excel data types and error values if needed before calling into 'Library' methods.
+* **MyAddIn.Test** - integration testing project for 'MyAddIn', using the `ExcelDna.Testing` package. Does not reference the `MyAddIn` or `MyLibrary` projects, just interacts with them through the Excel tests.
 
 ## Reference
 
@@ -149,4 +240,9 @@ The test methods can execute in two environments:
 ### Error values - COM vs C API
 
 One of the motivations for doing integration testing of an add-in in Excel is to ensure the behaviour of a function when receiving various unexpected values from Excel is correct. In particular, a function running in Excel might receive input values like 'Empty', 'Missing' or some Excel-specific error value like '#VALUE'. Depending on how the test code is reading values from Excel, these additional data types would be represented in different ways.
+It is not discussed here, but when running inside the Excel process, the C API (XlCall.Excel) can often improve the performance of Excel sheet interactions, and simplify dealing with the various Excel error values.
+
+### Thanks
+
+Thank you very much to Sergey Vlasov for developing the `ExcelDna.Testing` framework.
 

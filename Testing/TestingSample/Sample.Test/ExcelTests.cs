@@ -10,24 +10,29 @@ using Microsoft.Office.Interop.Excel;
 namespace Sample.Test
 {
     // The path give here is relative to the output directory of the test project.
+    // Setting an AddIn options here will request the test runner to load this add-in into Excel before the tests start.
+    // The name here excludes the ".xll" or "64.xll" suffix. The test runner will choose according to the Excel bitness where it runs.
     [ExcelTestSettings(AddIn = @"..\..\..\Sample\bin\Debug\Sample-AddIn")]
     public class ExcelTests : IDisposable
     {
-        // This 
+        // This workbook will be available to all tests in the class
         Workbook _testWorkbook;
 
-
+        // The test class constructor will configure the required environment for the tests in the class.
+        // In this case it creates a new Workbook that will be shared by the tests
         public ExcelTests()
         {
             var app = Util.Application;
             _testWorkbook = app.Workbooks.Add();
         }
 
+        // Clean-up for the class is in the IDisposable.Dispose implementation
         public void Dispose()
         {
             _testWorkbook.Close(SaveChanges: false);
         }
 
+        // This test just interacts with Excel
         [ExcelFact]
         public void ExcelCanAddNumbers()
         {
