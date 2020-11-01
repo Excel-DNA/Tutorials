@@ -30,10 +30,10 @@ The example will mostly use C#, but Visual Basic is fully supported can also be 
 If you are not familiar with unit test frameworks, or with xUnit in particular, you might want to look at or work through the XUnit Getting Started instructions for 
 [Using .NET Framework with Visual Studio](https://xunit.net/docs/getting-started/netfx/visual-studio).
 
-## Creating a test project
-A new test project is started by:
-* creating a new  'Class Library (.NET Framework)' project (using C# or Visual Basic) and
-* installing the `ExcelDna.Testing` package from the NuGet package manager (currently a pre-release package, so check the relevant checkbox or add the `-Pre` flag to the NuGet command line).
+## Create a test project
+To start a new test project:
+* create a new  'Class Library (.NET Framework)' project (using C# or Visual Basic) and
+* install the `ExcelDna.Testing` package from the NuGet package manager (currently a pre-release package, so check the relevant checkbox or add the `-Pre` flag to the NuGet command line).
 
 After installing the `ExcelDna.Testing` package, the project will have the xUnit framework and Visual Studio runner for xUnit installed, so no additional packages are needed.
 
@@ -44,33 +44,47 @@ After installing the `ExcelDna.Testing` package, the project will have the xUnit
 This is a simple test the exercises Excel to 
 
 ```c#
+using System;
 using Xunit;
+using Microsoft.Office.Interop.Excel;
 using ExcelDna.Testing;
 
-[assembly:TestFramework("Xunit.ExcelTestFramework", "ExcelDna.Testing")]
+[assembly: TestFramework("Xunit.ExcelTestFramework", "ExcelDna.Testing")]
 
 namespace ExcelTest
 {
-    public class CalculationTests
+    public class CalculationTests : IDisposable
     {
+        Workbook _testWorkbook;
+
+        public CalculationTests()
+        {
+            // Get hold of the Excel Application object and create a workbook
+            _testWorkbook = Util.Application.Workbooks.Add();
+        }
+
+        public void Dispose()
+        {
+            // Clean up our workbook without saving changes
+            _testWorkbook.Close(SaveChanges: false);
+        }
+
         [ExcelFact]
         public void NumbersAddCorrectly()
         {
-            // Get hold of the Excel instance, create a workbook, and then reference the first sheet
-            var app = Util.Application;
-            var wb = app.Workbooks.Add();
-            var _testSheet = wb.Sheets[1];
+            // We'll just do our test on the first sheet
+            var ws = _testWorkbook.Sheets[1];
 
             // Write two numbers to the active sheet, and a formula that adds them, together
-            _testSheet.Range["A1"].Value = 2.0;
-            _testSheet.Range["A2"].Value = 3.0;
-            _testSheet.Range["A3"].Formula = "= A1 + A2";
+            ws.Range["A1"].Value = 2.0;
+            ws.Range["A2"].Value = 3.0;
+            ws.Range["A3"].Formula = "= A1 + A2";
 
             // Read back the value from the cell with the formula
-            var result = _testSheet.Range["A3"].Value;
+            var result = ws.Range["A3"].Value;
 
             // Check that we have the expected result
-            Assert.Equal(result, 5.0);
+            Assert.Equal(5.0, result);
         }
     }
 }
@@ -84,8 +98,9 @@ Some notable aspects of the above code snippet:
 * The `Xunit.ExcelTestFramework` is configured through the `Xunit.TestFramework` assembly-scope attribute.
 * Tests are public instance methods marked by an `[ExcelDna.Testing.ExcelFact]` attribute.
 * Test code can access Excel `Application` object with a call to `ExcelDna.Testing.Util.Application`. This will refer to the correct Excel root COM object, whether the test code is running in-process or out-of-process (see below).
+* We use the class constructor and `IDispose` interface to set up and tear down some 
 
-### *AddInTest* - Testing an add-in
+### *AddInTest* - Testing an Excel-DNA add-in
 
 For this test project we create a simple Excel-DNA add-in with a single UDF, and then implement a test project that exercises the add-in function inside Excel.
 
@@ -93,7 +108,7 @@ For this test project we create a simple Excel-DNA add-in with a single UDF, and
 
 ## Solution layout suggestion
 
-For supporting both functional unit testing and Excel integration testing, one possible solution layout is as follows:
+For supporting both isolated unit testing and Excel-based integration testing, one possible solution layout is as follows:
 
 * *Library* - contains the core functionality, e.g. calculations or external data access methods. Does not reference Excel-DNA or Excel.
 * *Library.Test* - unit test project for the functionality in `Library`, using the standard `xunit` and `xunit.runner.visualstudio` packages as described in the [xUnit documentation](https://xunit.net/docs/getting-started/netfx/visual-studio).
