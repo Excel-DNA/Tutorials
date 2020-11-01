@@ -20,12 +20,12 @@ This tutorial will introduce the Excel-DNA testing helper, and show you how to c
 
 ## Background and prerequisites
 
-* Visual Studio and Excel
+* **Visual Studio and Excel** - 
 To use the testing helper you should already have Visual Studio 2019 and Excel (any version) installed.
 The example will mostly use C#, but Visual Basic is fully supported can also be used for creating your test project.
 
-* xUnit
-[xUnit](https://xunit.net/) is a unit testing tool for the .NET Framework. 
+* **xUnit** - 
+[xUnit](https://xunit.net/) is a unit testing tool for the .NET Framework. The required xUnit libraries and runner will automatically installed with the `ExcelDna.Testing` package.
 
 If you are not familiar with unit test frameworks, or with xUnit in particular, you might want to look at or work through the XUnit Getting Started instructions for 
 [Using .NET Framework with Visual Studio](https://xunit.net/docs/getting-started/netfx/visual-studio).
@@ -110,10 +110,10 @@ For this test project we create a simple Excel-DNA add-in with a single UDF, and
 
 For supporting both isolated unit testing and Excel-based integration testing, one possible solution layout is as follows:
 
-* *Library* - contains the core functionality, e.g. calculations or external data access methods. Does not reference Excel-DNA or Excel.
-* *Library.Test* - unit test project for the functionality in `Library`, using the standard `xunit` and `xunit.runner.visualstudio` packages as described in the [xUnit documentation](https://xunit.net/docs/getting-started/netfx/visual-studio).
-* *AddIn* - Excel AddIn to integrate the functionality from `Library` into Excel, using the `ExcelDna.AddIn` package. Functions declared here contain Excel-specific attributes and information, and deal with the Excel data types and error values if needed before calling into 'Library' methods.
-* *AddIn.Test* - integration testing project for 'AddIn', using the `ExcelDna.Testing` package.
+* **Library** - contains the core functionality, e.g. calculations or external data access methods. Does not reference Excel-DNA or Excel.
+* **Library.Test** - unit test project for the functionality in `Library`, using the standard `xunit` and `xunit.runner.visualstudio` packages as described in the [xUnit documentation](https://xunit.net/docs/getting-started/netfx/visual-studio).
+* **AddIn** - Excel AddIn to integrate the functionality from `Library` into Excel, using the `ExcelDna.AddIn` package. Functions declared here contain Excel-specific attributes and information, and deal with the Excel data types and error values if needed before calling into 'Library' methods.
+* **AddIn.Test** - integration testing project for 'AddIn', using the `ExcelDna.Testing` package.
 
 ## Reference
 
