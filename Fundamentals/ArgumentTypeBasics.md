@@ -4,10 +4,6 @@ This discussion is about classic data types like Double, String and Boolean that
 
 I want to explain how different data types are used by Excel for the worksheet data, in VBA for UDF arguments and variable values and correspondingly for UDFs created in the .NET type system. I'll discuss the  basic data types as they appear in these different settings, with a specific focus on user-defined functions (UDFs) created in VBA vs. those created in Excel-DNA with the .NET languages.
 
-UDFs that are created in VBA or .NET will receive (and return) values from (and to) the worksheet.
-* How are the data types and special values related?
-* What differs when code is moved from VBA to VB.NET? 
-
 Data type related issues that I don't cover in detail in this 'Basics' topic include:
 * Linked Data Types in new versions of Excel
 * Dynamic arrays and how they work with UDFs.
@@ -200,7 +196,7 @@ End Function
 
 While simple, this approach to accepting array inputs in function raises a problem, and it will be instructive to try to address it.
 
-Because we are declaring the parameter as 'Range', the function can't be called with the input from a literal array or other function. So these calls will fail: `=vbaSumEvenNumbers({1,2,3,4})` and `=vbaSumEvenNumbers(SEQUENCE(10))`.
+Because we are declaring the parameter as 'Range', the function can't be called with the input from a literal array or other function. So these calls will fail: `=vbaSumEvenNumbers({1,2,3,4})` and `=vbaSumEvenNumbers(SEQUENCE(100))`.
 (Here the SEQUENCE function is only available under Dynamic Array versions of Excel, but `=SEQUENCE(n)` returns an array of numbers `1, 2, 3, ... n`.)
 Another problem with the function is that the performance when called with a large input is likely to be bad, because we are eumerating through the cells in the input, and not reading all the values at once. That's a bit of an implementation detail in the algorithm, so I'll focus on the data type issues for now.
 
@@ -275,5 +271,15 @@ With calculated results as discussed
 | 5 | 2550    |
 
 
+## UDF Arguments in .NET
 
+We now consider the data type situation for UDFs defined with Excel-DNA in .NET.
+
+Our simple argument description function would look like this:
+
+```vb
+Function ArgumentInfoDna(arg As Object) As String
+
+End Function
+```
 
