@@ -255,7 +255,6 @@ But now we can deal with 1D and 2D literal inputs, in addition to the `Range` in
 On the sheet the different options look like this
 
 | `1` | `=vbaSumEvenNumbers(A1:A5)`          |
-|-----|--------------------------------------|
 | `2` | `=vbaSumEvenNumbers({1,2,3,4,5})`    |
 | `3` | `=vbaSumEvenNumbersV(A1:A5)`         |
 | `4` | `=vbaSumEvenNumbersV({1,2,3,4,5})`   |
@@ -264,7 +263,6 @@ On the sheet the different options look like this
 With calculated results as discussed
 
 | 1 | 6       |
-|---|---------|
 | 2 | #VALUE! |
 | 3 | 6       |
 | 4 | 6       |
