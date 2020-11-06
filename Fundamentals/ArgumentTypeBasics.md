@@ -61,6 +61,7 @@ End Function
 The [VBA Variant data type](https://docs.microsoft.com/en-us/office/vba/language/reference/user-interface-help/variant-data-type) is a special type that can contain any type of value.
 
 We can examine the value type if a Variant value using the [`VarType`](https://docs.microsoft.com/en-us/office/vba/language/reference/user-interface-help/vartype-function) function, and some other helpes. The full code is in the workbook that accompanies this tutorial, but the main function looks like this:
+
 ```vb
 Function ArgumentInfoVba(Optional arg As Variant) As String
     Dim value
@@ -91,16 +92,6 @@ Function VarTypeName(varType As Integer)
             VarTypeName = "vbEmpty" ' Empty (uninitialized)
         ' Omitted here, but there lots more cases like this...
     End Select
-End Function
-
-Function ArraySize(value As Variant) As String
-    On Error Resume Next ' Nasty hack to allow 2D and 1D arrays
-    If varType(value) > vbArray Then
-        ArraySize = "(" & LBound(value, 1) & ":" & UBound(value, 1) & ")"
-        ArraySize = "(" & LBound(value, 1) & ":" & UBound(value, 1) & "," & LBound(value, 2) & ":" & UBound(value, 2) & ")"
-    Else
-        ArraySize = "<Not an array>"
-    End If
 End Function
 ```
 
@@ -254,6 +245,8 @@ But now we can deal with 1D and 2D literal inputs, in addition to the `Range` in
 
 On the sheet the different options look like this
 
+| `A` | `B`                                  |
+|-----|--------------------------------------|
 | `1` | `=vbaSumEvenNumbers(A1:A5)`          |
 | `2` | `=vbaSumEvenNumbers({1,2,3,4,5})`    |
 | `3` | `=vbaSumEvenNumbersV(A1:A5)`         |
@@ -262,6 +255,9 @@ On the sheet the different options look like this
 
 With calculated results as discussed
 
+
+| `A` | `B`   |
+|-----|-------|
 | 1 | 6       |
 | 2 | #VALUE! |
 | 3 | 6       |
@@ -272,8 +268,10 @@ With calculated results as discussed
 ## UDF Arguments in .NET
 
 We now consider the data type situation for UDFs defined with Excel-DNA in .NET.
+For this discussion we are using a new `Class Library (.NET Framework)` project in Visual Basic, that has the `ExcelDna.AddIn` NuGet package installed.
+The data type aspects on the Excel-DNA and .NET side are identical between Visual Basic and C#.
 
-Our simple argument description function would look like this:
+Our simple argument description function in VB.NET would look like this:
 
 ```vb
 Function ArgumentInfoDna(arg As Object) As String
