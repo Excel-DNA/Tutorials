@@ -44,7 +44,7 @@ In the worksheet 'ArgumentTypes.xlsm' that accompanies this discussion I show al
 ## UDF argument types in VBA
 
 In this section I look at how the worksheet data types relate to VBA types for user-defined functions.
-The exact formulas and VBA used for this workbook can be check in the accompaying [ArgumentTypeBasics.xlsm Workbook](ArgumentTypeBasics\ArgumentTypeBasics.xlsm).
+The exact formulas and VBA used for this workbook can be check in the accompaying [ArgumentTypeBasics.xlsm Workbook](ArgumentTypeBasics.xlsm).
 
 Consider a UDF that has one parameter. In VBA we'd write that most simply as 
 ```vb
