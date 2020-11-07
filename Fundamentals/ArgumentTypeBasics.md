@@ -20,17 +20,17 @@ Data type related issues that I don't cover in detail in this 'Basics' topic inc
 
 A cell in Excel is empty or it has a value and possibly also a formula associated with it. If it has a formula, the cell has a value that is computed from the formula.
 The cell values will have one of the following value types:
-* Empty - a cell is never empty if the cell has a formula - the formula or UDF can't result in an 'empty' cell value - though possibly in an empty (0-length) string
-* Number (Double) - always represented by 64-bit floating point numbers
-* Text (String) - represented as a Unicode string with at most 32767 characters. An empty (0-length) string is not the same as an empty cell.
-* Logical (Boolean) - either TRUE or FALSE
-* Error - the various possible Excel error values like #VALUE!
+* **Number (Double)** - always represented by a 64-bit floating point number
+* **Text (String)** - represented as a Unicode string with at most 32767 characters. An empty (0-length) string is not the same as an empty cell.
+* **Logical (Boolean)** - either TRUE or FALSE
+* **Error** - the various possible Excel error values like #VALUE!
+* **Empty** - a cell is never empty if the cell has a formula - the formula or UDF can't result in an 'empty' cell value - though possibly in an empty (0-length) string
 
 For a UDF called from an Excel sheet, there are a few other types involved.
 A parameter of the UDF might have additional value types:
-* Missing - if no value is specified for the parameter in the formula
-* Array of basic values - 1D or 2D array of scalar values, from an array literal, a sheet array reference or from a Dynamic Arrays spill range reference.
-* Sheet Reference (Range in VBA) - one area where VBA and Excel-DNA will differ a bit and is discussed in detail below.
+* **Missing** - if no value is specified for the parameter in the formula
+* **Array** of basic values - 1D or 2D array of scalar values, from an array literal, a sheet array reference or from a Dynamic Arrays spill range reference.
+* **Sheet Reference** (Range in VBA) - one area where VBA and Excel-DNA will differ a bit and is discussed in detail below.
 
 > **Notes**
 > * There is no date / time value type in the list. For Excel, Date/Time is a formatting options for internal double values that represent the date and time. So date/time display formatting is similar to font selection or colours applied to a cell - it is a display option and not an internal value. But as well soon see, cell values that are formatted as dates are sometimes interpreted as DateTime values in VBA. (Specifically, the `Range.Value` property sometimes returns a COM DateTime or Currency value, in constrast with the `Range.Value2` property which returns a `double` in both these cases.)
@@ -44,43 +44,44 @@ In the worksheet 'ArgumentTypes.xlsm' that accompanies this discussion I show al
 
 ## UDF argument types in VBA
 
-In this section I look at how the worksheet data types relate to VBA types for UDFs.
+In this section I look at how the worksheet data types relate to VBA types for user-defined functions.
 
-A single UDF accepts one parameter. In VBA we'd write that as 
+Consider a simple UDF taht has one parameter. In VBA we'd write that most simply as 
 ```vb
 Function MyFunc(input)
 End Function
 ```
 
-If we're using data type declarations, as is required with 'Option Explicit' the equivalent would be:
+If we're using data type declarations, as is required with 'Option Explicit', the equivalent with type annotations would be:
 ```vb
 Function MyFunc(input as Variant) As Variant
 End Function
 ```
 
-The [VBA Variant data type](https://docs.microsoft.com/en-us/office/vba/language/reference/user-interface-help/variant-data-type) is a special type that can contain any type of value.
+The [VBA Variant data type](https://docs.microsoft.com/en-us/office/vba/language/reference/user-interface-help/variant-data-type) is a special type that can contain any type of value. We'll see later that the equivalent type in .NET is called `Object`.
 
-We can examine the value type if a Variant value using the [`VarType`](https://docs.microsoft.com/en-us/office/vba/language/reference/user-interface-help/vartype-function) function, and some other helpes. The full code is in the workbook that accompanies this tutorial, but the main function looks like this:
+We can examine the actual type of a Variant value using the [`VarType`](https://docs.microsoft.com/en-us/office/vba/language/reference/user-interface-help/vartype-function) function, and some other helpers. The full code is in the workbook that accompanies this tutorial, but the main function looks like this:
 
 ```vb
-Function ArgumentInfoVba(Optional arg As Variant) As String
+' Describes the type and details of the argument passed in when the UDF is called.
+Function vbaArgumentInfo(Optional arg As Variant) As String
     Dim value
     Dim value2
 
     If IsMissing(arg) Then
-        ArgumentInfoVba = "<Missing>"
+        vbaArgumentInfo = "<Missing>"
     ElseIf IsObject(arg) And TypeOf arg Is Range Then
         value = arg.value
         value2 = arg.value2
         If varType(value) = varType(value2) Then
-            ArgumentInfoVba = "Range(" & arg.Address & "): " & ArgumentInfoVba(value)
+            vbaArgumentInfo = "Range(" & arg.Address & "): " & vbaArgumentInfo(value)
         Else
-            ArgumentInfoVba = "Range(" & arg.Address & "): " & ArgumentInfoVba(value) & " (" & ArgumentInfoVba(value2) & ")"
+            vbaArgumentInfo = "Range(" & arg.Address & "): " & vbaArgumentInfo(value) & " (" & vbaArgumentInfo(value2) & ")"
         End If
     ElseIf IsArray(arg) Then
-        ArgumentInfoVba = "Array" + ArraySize(arg)
+        vbaArgumentInfo = "Array" + ArraySize(arg)
     Else
-        ArgumentInfoVba = VarTypeName(varType(arg)) & ": " & CStr(arg)
+        vbaArgumentInfo = VarTypeName(varType(arg)) & ": " & CStr(arg)
     End If
         
 End Function
@@ -130,88 +131,113 @@ On the 'ArgumentValue' sheet we can now see how different datatype look on the s
   
 The formulas on this sheet look like this:
 
-| Value Type                   | Example Value                     |                    | Excel TYPE     | Name                | ArgumentInfoVBA - Reference Argument | ArgumentInfoVBA - Literal Argument  |
+| Value Type                   | Example Value                     |                    | Excel TYPE     | Name                | vbaArgumentInfo - Reference Argument | vbaArgumentInfo - Literal Argument  |
 |------------------------------|-----------------------------------|--------------------|----------------|---------------------|--------------------------------------|-------------------------------------|
-| Empty Cell                   |                                   |                    | =TYPE(B2)      | =ExcelTypeName(D2)  | =ArgumentInfoVba(B2)                 | =ArgumentInfoVba()                  |
-| Number                       | 1.234                             |                    | =TYPE(B3)      | =ExcelTypeName(D3)  | =ArgumentInfoVba(B3)                 | =ArgumentInfoVba(1.234)             |
-|                              | 42                                |                    | =TYPE(B4)      | =ExcelTypeName(D4)  | =ArgumentInfoVba(B4)                 | =ArgumentInfoVba(42)                |
-|                              | 9.87E+201                         |                    | =TYPE(B5)      | =ExcelTypeName(D5)  | =ArgumentInfoVba(B5)                 | =ArgumentInfoVba(9.87E+201)         |
-|     Formatted as Date        | 44141                             |                    | =TYPE(B6)      | =ExcelTypeName(D6)  | =ArgumentInfoVba(B6)                 | =ArgumentInfoVba(44141)             |
-|     Formatted as Currency    | 99.99                             |                    | =TYPE(B7)      | =ExcelTypeName(D7)  | =ArgumentInfoVba(B7)                 | =ArgumentInfoVba(99.99)             |
-| String                       | Hello, World!                     |                    | =TYPE(B8)      | =ExcelTypeName(D8)  | =ArgumentInfoVba(B8)                 | =ArgumentInfoVba("Hello, World!")   |
-|     Empty (0-length)         |                                   |                    | =TYPE(B9)      | =ExcelTypeName(D9)  | =ArgumentInfoVba(B9)                 | =ArgumentInfoVba("")                |
-| Boolean                      | TRUE                              |                    | =TYPE(B10)     | =ExcelTypeName(D10) | =ArgumentInfoVba(B10)                | =ArgumentInfoVba(TRUE)              |
-|                              | FALSE                             |                    | =TYPE(B11)     | =ExcelTypeName(D11) | =ArgumentInfoVba(B11)                | =ArgumentInfoVba(FALSE)             |
-| Error                        | =1/0                              |                    | =TYPE(B12)     | =ExcelTypeName(D12) | =ArgumentInfoVba(B12)                | =ArgumentInfoVba(#DIV/0!)           |
-|                              | =SUM("A")                         |                    | =TYPE(B13)     | =ExcelTypeName(D13) | =ArgumentInfoVba(B13)                | =ArgumentInfoVba(#VALUE!)           |
-|                              | =OFFSET($A$2, -1, -1)             |                    | =TYPE(B14)     | =ExcelTypeName(D14) | =ArgumentInfoVba(B14)                | =ArgumentInfoVba(#REF!)             |
-|                              | =MadeUpName                       |                    | =TYPE(B15)     | =ExcelTypeName(D15) | =ArgumentInfoVba(B15)                | =ArgumentInfoVba(#NAME?)            |
-|                              | =1E+200 ^ 2                       |                    | =TYPE(B16)     | =ExcelTypeName(D16) | =ArgumentInfoVba(B16)                | =ArgumentInfoVba(#NUM!)             |
-|                              | =VLOOKUP("A", {"B"}, 0,FALSE )    |                    | =TYPE(B17)     | =ExcelTypeName(D17) | =ArgumentInfoVba(B17)                | =ArgumentInfoVba(#N/A)              |
-|                              | ={1;2}                            |                    | =TYPE(B18)     | =ExcelTypeName(D18) | =ArgumentInfoVba(B18)                | NOTE: =ERROR.TYPE(????)             |
-| Ctrl+Shift+Enter 2D Array    | ={1,"A";0.1,FALSE}                | ={1,"A";0.1,FALSE} | =TYPE(B19:C20) | =ExcelTypeName(D19) | =ArgumentInfoVba(B19:C20)            | =ArgumentInfoVba({1,"A";0.1,FALSE}) |
+| Empty Cell                   |                                   |                    | =TYPE(B2)      | =ExcelTypeName(D2)  | =vbaArgumentInfo(B2)                 | =vbaArgumentInfo()                  |
+| Number                       | 1.234                             |                    | =TYPE(B3)      | =ExcelTypeName(D3)  | =vbaArgumentInfo(B3)                 | =vbaArgumentInfo(1.234)             |
+|                              | 42                                |                    | =TYPE(B4)      | =ExcelTypeName(D4)  | =vbaArgumentInfo(B4)                 | =vbaArgumentInfo(42)                |
+|                              | 9.87E+201                         |                    | =TYPE(B5)      | =ExcelTypeName(D5)  | =vbaArgumentInfo(B5)                 | =vbaArgumentInfo(9.87E+201)         |
+|     Formatted as Date        | 44141                             |                    | =TYPE(B6)      | =ExcelTypeName(D6)  | =vbaArgumentInfo(B6)                 | =vbaArgumentInfo(44141)             |
+|     Formatted as Currency    | 99.99                             |                    | =TYPE(B7)      | =ExcelTypeName(D7)  | =vbaArgumentInfo(B7)                 | =vbaArgumentInfo(99.99)             |
+| String                       | Hello, World!                     |                    | =TYPE(B8)      | =ExcelTypeName(D8)  | =vbaArgumentInfo(B8)                 | =vbaArgumentInfo("Hello, World!")   |
+|     Empty (0-length)         |                                   |                    | =TYPE(B9)      | =ExcelTypeName(D9)  | =vbaArgumentInfo(B9)                 | =vbaArgumentInfo("")                |
+| Boolean                      | TRUE                              |                    | =TYPE(B10)     | =ExcelTypeName(D10) | =vbaArgumentInfo(B10)                | =vbaArgumentInfo(TRUE)              |
+|                              | FALSE                             |                    | =TYPE(B11)     | =ExcelTypeName(D11) | =vbaArgumentInfo(B11)                | =vbaArgumentInfo(FALSE)             |
+| Error                        | =1/0                              |                    | =TYPE(B12)     | =ExcelTypeName(D12) | =vbaArgumentInfo(B12)                | =vbaArgumentInfo(#DIV/0!)           |
+|                              | =SUM("A")                         |                    | =TYPE(B13)     | =ExcelTypeName(D13) | =vbaArgumentInfo(B13)                | =vbaArgumentInfo(#VALUE!)           |
+|                              | =OFFSET($A$2, -1, -1)             |                    | =TYPE(B14)     | =ExcelTypeName(D14) | =vbaArgumentInfo(B14)                | =vbaArgumentInfo(#REF!)             |
+|                              | =MadeUpName                       |                    | =TYPE(B15)     | =ExcelTypeName(D15) | =vbaArgumentInfo(B15)                | =vbaArgumentInfo(#NAME?)            |
+|                              | =1E+200 ^ 2                       |                    | =TYPE(B16)     | =ExcelTypeName(D16) | =vbaArgumentInfo(B16)                | =vbaArgumentInfo(#NUM!)             |
+|                              | =VLOOKUP("A", {"B"}, 0,FALSE )    |                    | =TYPE(B17)     | =ExcelTypeName(D17) | =vbaArgumentInfo(B17)                | =vbaArgumentInfo(#N/A)              |
+|                              | ={1;2}                            |                    | =TYPE(B18)     | =ExcelTypeName(D18) | =vbaArgumentInfo(B18)                | NOTE: =ERROR.TYPE(????)             |
+| Ctrl+Shift+Enter 2D Array    | ={1,"A";0.1,FALSE}                | ={1,"A";0.1,FALSE} | =TYPE(B19:C20) | =ExcelTypeName(D19) | =vbaArgumentInfo(B19:C20)            | =vbaArgumentInfo({1,"A";0.1,FALSE}) |
 |                              | ={1,"A";0.1,FALSE}                | ={1,"A";0.1,FALSE} |                | =ExcelTypeName(D20) |                                      |                                     |
-| Dynamic 2D Array             | ={99,"B";"",TRUE}                 | ={99,"B";"",TRUE}  | =TYPE(B21#)    | =ExcelTypeName(D21) | =ArgumentInfoVba(B21#)               | =ArgumentInfoVba({99,"B";"",TRUE})  |
+| Dynamic 2D Array             | ={99,"B";"",TRUE}                 | ={99,"B";"",TRUE}  | =TYPE(B21#)    | =ExcelTypeName(D21) | =vbaArgumentInfo(B21#)               | =vbaArgumentInfo({99,"B";"",TRUE})  |
 |                              | ={99,"B";"",TRUE}                 | ={99,"B";"",TRUE}  |                | =ExcelTypeName(D22) |                                      |                                     |
-| Single Row Array             | ={1,"A"}                          | ={1,"A"}           | =TYPE(B23#)    | =ExcelTypeName(D23) | =ArgumentInfoVba(B23#)               | =ArgumentInfoVba({1,"A"})           |
-| Single Column Array          | ={1;"A"}                          |                    | =TYPE(B24#)    | =ExcelTypeName(D24) | =ArgumentInfoVba(B24#)               | =ArgumentInfoVba({1;"A"})           |
+| Single Row Array             | ={1,"A"}                          | ={1,"A"}           | =TYPE(B23#)    | =ExcelTypeName(D23) | =vbaArgumentInfo(B23#)               | =vbaArgumentInfo({1,"A"})           |
+| Single Column Array          | ={1;"A"}                          |                    | =TYPE(B24#)    | =ExcelTypeName(D24) | =vbaArgumentInfo(B24#)               | =vbaArgumentInfo({1;"A"})           |
 |                              | ={1;"A"}                          |                    |                |                     |                                      |                                     |
-| Array Literal in Single Cell | =@{1,"A"}                         |                    | =TYPE(B26#)    | =ExcelTypeName(D26) | =ArgumentInfoVba(B26#)               | =@ArgumentInfoVba({1,"A"})          |
-| Linked Data                  | MICROSOFT CORPORATION (XNAS:MSFT) |                    | =TYPE(B28)     | =ExcelTypeName(D28) | =ArgumentInfoVba(B28)                |                                     |
-|                              | =B28.[Year incorporated]          |                    | =TYPE(B29)     | =ExcelTypeName(D29) | =ArgumentInfoVba(B29)                |                                     |
+| Array Literal in Single Cell | =@{1,"A"}                         |                    | =TYPE(B26#)    | =ExcelTypeName(D26) | =vbaArgumentInfo(B26#)               | =@vbaArgumentInfo({1,"A"})          |
+| Linked Data                  | MICROSOFT CORPORATION (XNAS:MSFT) |                    | =TYPE(B28)     | =ExcelTypeName(D28) | =vbaArgumentInfo(B28)                |                                     |
+|                              | =B28.[Year incorporated]          |                    | =TYPE(B29)     | =ExcelTypeName(D29) | =vbaArgumentInfo(B29)                |                                     |
 
-Another situation to consider is when the parameter type of the VBA function is not `Variant` but somethin glike `String` ro `Double`:
+### Implicit conversions
+
+Another situation to consider is when the parameter type of the VBA function is not `Variant` but something like `String` or `Double`:
 ```vb
-Function ArgumentIntegerVBA(value As Integer)
-    ArgumentIntegerVBA = value
+Function vbaArgumentDouble(arg As Double)
+    vbaArgumentDouble = arg
+End Function
+
+Function vbaArgumentBoolean(arg As Boolean)
+    vbaArgumentBoolean = arg
+End Function
+
+Function vbaArgumentInteger(arg As Integer)
+    vbaArgumentInteger = arg
 End Function
 ```
-In this case Excel will attempt to do a conversion of the input value into the parameter type. That conversion might fail (e.g. if a string if passed to `ArgumentIntegerVBA`) or might round or otherwise change the input to convert it to the parameter type (e.g. when passing a double here, it will be rounded).
+
+In this case Excel will attempt to do a conversion of the input value into the parameter type. That conversion might fail (e.g. if a string if passed to `ArgumentIntegerVBA`) or might round or otherwise change the input to convert it to the parameter type (e.g. when passing a `Double` to the `-Integer`, the number will be rounded).
+
+When using these implicit conversions for argument values, you should check carefully how different input types are interpreted, and that this is consistent with the intention of the function.
 
 ### Arrays and Range parameters
+
+In VBA there are two options for declaring a function that will process an array input. We can decalre the parameter type to be
+* `Variant` - and check for the different variant types passed, or
+* `Range` - and then either process each cell in the range or call `Range.Value` (`.Value2) on the range to get a variant with the contents, which we check and process as above.
 
 Consider a function like `=SumEvenValues` where we want to take an array (or range reference of values and then add the even numbers.
 A simple implementation (borrowed from the lovely [Excel-Easy](https://www.excel-easy.com/vba/examples/user-defined-function.html) website) might look like this:
 ```vb
-Function vbaSumEvenNumbers(rng As Range)
+' This is the -R version, which has the input parameter seclared as Range
+Function vbaSumEvenNumbersR(rng As Range)
     Dim cell As Range
+    Dim sum As Double
     
-    vbaSumEvenNumbers = 0
     For Each cell In rng
         If cell.value Mod 2 = 0 Then
-            vbaSumEvenNumbers = vbaSumEvenNumbers + cell.value
+            sum = sum + cell.value
         End If
     Next
+    
+    vbaSumEvenNumbersR = sum
 End Function
 ```
 
 While simple, this approach to accepting array inputs in function raises a problem, and it will be instructive to try to address it.
 
-Because we are declaring the parameter as 'Range', the function can't be called with the input from a literal array or other function. So these calls will fail: `=vbaSumEvenNumbers({1,2,3,4})` and `=vbaSumEvenNumbers(SEQUENCE(100))`.
+Because we are declaring the parameter as 'Range', the function can't be called with the input from a literal array or other function. So these calls will fail: `=vbaSumEvenNumbersR({1,2,3,4})` and `=vbaSumEvenNumbersR(SEQUENCE(100))`.
 (Here the SEQUENCE function is only available under Dynamic Array versions of Excel, but `=SEQUENCE(n)` returns an array of numbers `1, 2, 3, ... n`.)
+
+Note that in this function, we are calling `cell.Value` on each cell, which returns a `Variant` containing one of the Excel types as discussed above. If the call value is a string or an error, we should really decide how that is processed in our function. For adding evens it's probably OK to ignore non-nuymeric values, but in other cases the handling of an empty cell might be important (e.g. not counted as a '0' in an `Average` function).
+
 Another problem with the function is that the performance when called with a large input is likely to be bad, because we are eumerating through the cells in the input, and not reading all the values at once. That's a bit of an implementation detail in the algorithm, so I'll focus on the data type issues for now.
 
-An alternative that takes 'Variant' arguments would have to analyze the input more carefully. It is longer, but more explicit about how the data types are handled.
+An alternative that takes 'Variant' arguments would have to analyze the input more carefully. It is longer, but more explicit about how the argument types are handled.
 
 ```vb
+' This is the -V version, which has the input parameter seclared as Variant
 Function vbaSumEvenNumbersV(arg As Variant)
     Dim i As Long
     Dim j As Long
     Dim rng As Range
     Dim area As Range
+    Dim sum As Double
     
     If IsObject(arg) And TypeOf arg Is Range Then
         ' Get the dereferenced values from each Area of the Range and call ourselves with the actual values - then we'll process as below
         Set rng = arg
         For Each area In rng.Areas
-            vbaSumEvenNumbersV = vbaSumEvenNumbersV(area.value)
+            sum = sum + vbaSumEvenNumbersV(area.value)
         Next
     ElseIf IsArray(arg) Then
         If ArrayDim(arg) = 1 Then
             ' 1D array
             For i = LBound(arg, 1) To UBound(arg, 1)
                 If arg(i) Mod 2 = 0 Then
-                    vbaSumEvenNumbersV = vbaSumEvenNumbersV + arg(i)
+                    sum = sum + arg(i)
                 End If
             Next
             
@@ -220,7 +246,7 @@ Function vbaSumEvenNumbersV(arg As Variant)
             For i = LBound(arg, 1) To UBound(arg, 1)
                 For j = LBound(arg, 2) To UBound(arg, 2)
                     If arg(i, j) Mod 2 = 0 Then
-                        vbaSumEvenNumbersV = vbaSumEvenNumbersV + arg(i, j)
+                        sum = sum + arg(i, j)
                     End If
                 Next
             Next
@@ -230,16 +256,17 @@ Function vbaSumEvenNumbersV(arg As Variant)
         ' We'll process it using whatever type conversion VBA does when evaluating the 'Mod' operator
         ' Alternatively we could examine further
         If arg Mod 2 = 0 Then
-            vbaSumEvenNumbersV = arg
+            sum = arg
         Else
-            vbaSumEvenNumbersV = 0
+            sum = 0
         End If
     End If
     
+    vbaSumEvenNumbersV = sum
 End Function
 ```
 
-But now we can deal with 1D and 2D literal inputs, in addition to the `Range` input.
+The advantage is that we can now deal with 1D and 2D literal inputs, in addition to the `Range` reference as input.
 
 > Note that there is a little quirk with `Range`s with multiple areas, where calling `Range.Value` will return the values from the first area only. So to really replicate the first function which does `For Each cell in theRange` we need to iterate through all the areas.
 
@@ -247,8 +274,8 @@ On the sheet the different options look like this
 
 | `A` | `B`                                  |
 |-----|--------------------------------------|
-| `1` | `=vbaSumEvenNumbers(A1:A5)`          |
-| `2` | `=vbaSumEvenNumbers({1,2,3,4,5})`    |
+| `1` | `=vbaSumEvenNumbersR(A1:A5)`          |
+| `2` | `=vbaSumEvenNumbersR({1,2,3,4,5})`    |
 | `3` | `=vbaSumEvenNumbersV(A1:A5)`         |
 | `4` | `=vbaSumEvenNumbersV({1,2,3,4,5})`   |
 | `5` | `=vbaSumEvenNumbersV(SEQUENCE(100))` |
@@ -256,26 +283,154 @@ On the sheet the different options look like this
 With calculated results as discussed
 
 
-| `A` | `B`   |
-|-----|-------|
-| 1 | 6       |
-| 2 | #VALUE! |
-| 3 | 6       |
-| 4 | 6       |
-| 5 | 2550    |
+| `A` | `B`       |
+|-----|-----------|
+| `1` | `6`       |
+| `2` | `#VALUE!` |
+| `3` | `6`       |
+| `4` | `6`       |
+| `5` | `2550`    |
 
 
 ## UDF Arguments in .NET
 
 We now consider the data type situation for UDFs defined with Excel-DNA in .NET.
-For this discussion we are using a new `Class Library (.NET Framework)` project in Visual Basic, that has the `ExcelDna.AddIn` NuGet package installed.
-The data type aspects on the Excel-DNA and .NET side are identical between Visual Basic and C#.
+For this discussion we are using a new 'Class Library (.NET Framework)' project created with Visual Basic, and that has the `ExcelDna.AddIn` NuGet package installed.
 
-Our simple argument description function in VB.NET would look like this:
+Our argument description function in VB.NET would look like this:
 
 ```vb
-Function ArgumentInfoDna(arg As Object) As String
+Imports ExcelDna.Integration
 
-End Function
+Public Module Functions
+
+    ' Provides information about the data type and value that is passed in as argument
+    Public Function ArgumentInfoDna(arg As Object) As String
+    
+        If TypeOf arg Is ExcelMissing Then
+            Return "<<Missing>>"
+        ElseIf TypeOf arg Is ExcelEmpty Then
+            Return "<<Empty>>"
+        ElseIf TypeOf arg Is Double Then
+            Return "Double: " + CDbl(arg)
+        ElseIf TypeOf arg Is String Then
+            Return "String: " + CStr(arg)
+        ElseIf TypeOf arg Is Boolean Then
+            Return "Boolean: " + CBool(arg)
+        ElseIf TypeOf arg Is ExcelError Then
+            Return "ExcelError: " + arg.ToString()
+        ElseIf TypeOf arg Is Object(,) Then
+            ' The object array returned here may contain a mixture of different types,
+            ' corresponding to the different cell contents.
+            ' Arrays received will always be 0-based 2D arrays
+            Dim argArray(,) As Object = arg
+            Return String.Format("Array({0},{1})", argArray.GetLength(0), argArray.GetLength(1))
+        Else
+            Return "!? Unheard Of ?!"
+        End If
+        
+    End Function
+    
+End Module
 ```
+
+### `ExcelReference` and the `AllowReference:=True` option
+
+One difference we see between the Excel-DNA and VBA versions of the argument description function is when a sheet reference is put in the formula.
+The Excel-DNA function (with an `Object` parameter) receives the dereferenced value (an array of values if appropriate) directly, while the VBA function (with the `Variant` parameter) will receives a COM `Range` object, from where the value (single or array) can be retrieved or other properties of the `Range` can be read.
+
+
+
+
+### Array argument types
+
+Excel-DNA supports additional array parameter types that VBA does not support for UDFs
+* `Object(,)` - if a single scalar value is passed as the argument (either a literal in the formula or a single-cell reference), the function will receive a 1x1 array with the value. This makes the code a bit simpler for functions that  expect to usually get array inputs.
+* `Object()` - if a 1D array is declared for the parameter then a single row or column can be passed in, or the first row is taken from a larger array
+* `Double(,)` - only called if all values in the input can be converted to doubles by Excel, otherwise Excel will return `#VALUE!` to the sheet.
+* `Double()`
+
+Using these, we can re-write the `SumEvenNumbers` like this
+```vb
+    ' The parameter type is declared as a 2D array.
+    ' The function can take a single value, or any rectangular range as input.
+    ' Union references with multiple areas will only pass in the first area (?)
+    Public Function dnaSumEvenNumbers2D(arg(,) As Object) As Double
+
+        Dim sum As Double = 0
+        Dim rows As Integer
+        Dim cols As Integer
+
+        rows = arg.GetLength(0)
+        cols = arg.GetLength(1)
+
+        For i As Integer = 0 To rows - 1
+            For j As Integer = 0 To cols - 1
+
+                Dim val As Object = arg(i, j)
+                If val Mod 2 = 0 Then
+                    sum += val
+                End If
+
+            Next
+        Next
+
+        Return sum
+
+    End Function
+```
+
+## Reference - argument types supported by Excel-DNA
+
+This section provdes a reference to all the argument types supported for UDFs with Excel-DNA.
+
+The allowed function parameter and return types are:
+* Double
+* String
+* DateTime    -- returns a double to Excel
+* Double[]    -- if only one column is passed in, takes that column, else first row is taken
+* Double[,]
+* Object
+* Object[]    -- if only one column is passed in, takes that column, else first row is taken
+* Object[,]
+* Boolean (bool)
+* Int32 (int)
+* Int16 (short)
+* UInt16 (ushort)
+* Decimal
+* Int64 (long)
+
+Incoming function parameters of type Object will only arrive as one of the following:
+* Double
+* String
+* Boolean
+* ExcelDna.Integration.ExcelError
+* ExcelDna.Integration.ExcelMissing
+* ExcelDna.Integration.ExcelEmpty
+* Object[,] containing an array with a mixture of the above types
+* ExcelReference -- (Only if AllowReference=true in ExcelArgumentAttribute)
+
+function parameters of type Object[] or Object[,] will receive an array containing a mixture of the above types (excluding Object[,])
+
+Return values of type Object are allowed to be:
+* Double
+* String
+* DateTime
+* Boolean
+* Double[]
+* Double[,]
+* Object[]
+* Object[,]
+* ExcelDna.Integration.ExcelError
+* ExcelDna.Integration.ExcelMissing.Value // Converted by Excel to be 0.0
+* ExcelDna.Integration.ExcelEmpty.Value   // Converted by Excel to be 0.0
+* ExcelDna.Integration.ExcelReference
+* Int32 (int)
+* Int16 (short)
+* UInt16 (ushort)
+* Decimal
+* Int64 (long)
+* otherwise the fucntion return a `#VALUE!` error
+
+Return values of type Object[] and Object[,] are processed as arrays of the type Object, containing a mixture of the above, excluding the array types.
 
