@@ -47,7 +47,7 @@ Public Module Functions
 
     ' The parameter type is declared as a 2D array.
     ' The function can take a single value, or any rectangular range as input.
-    ' Union references with multiple areas will only pass in the first area (?)
+    ' Union references with multiple areas will only pass in the first area
     Public Function dnaSumEvenNumbers2D(arg(,) As Object) As Double
 
         Dim sum As Double = 0
@@ -135,7 +135,7 @@ Public Module Functions
 
     End Function
 
-    ' The parameter type is declared as Object, and marked with teh AllowReference:=True flag
+    ' The parameter type is declared as Object, and marked with the AllowReference:=True flag
     ' The function can take a single value, or any sheet reference as input
     ' Sheet references might be to union ranges with multiple areas, which we process individually
     Public Function dnaSumEvenNumbersR(<ExcelArgument(AllowReference:=True)> arg As Object)
@@ -153,10 +153,10 @@ Public Module Functions
             ' We can call the array implementation directly
             sum = dnaSumEvenNumbers2D(arg)
         Else
-            ' Create an array with our value in, and call the array implementation
-            Dim argArray(1, 1) As Object
-            argArray(0, 0) = arg
-            sum = dnaSumEvenNumbers2D(arg)
+            ' Just check and return the value
+            If arg Mod 2 = 0 Then
+                sum = arg
+            End If
         End If
         Return sum
     End Function
