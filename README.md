@@ -6,7 +6,7 @@ Tutorial content and sample projects for Excel-DNA.
 ### GettingStarted
 * [Installing Visual Studio](GettingStarted/InstallVisualStudio.md)
 
-### Foundations
+### Fundamentals
 * [UDF Argument Types in VBA and .NET](Fundamentals/ArgumentTypeBasics)
 
 ### Testing
