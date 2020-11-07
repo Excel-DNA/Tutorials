@@ -1,20 +1,19 @@
 # Argument Type Basics
 
-This discussion is about classic data types like Double, String and Boolean that are used in Excel worksheets, and are passed into and back from VBA or .NET user-defined functions. The new [Linked Data Types](https://support.microsoft.com/en-us/office/excel-data-types-stocks-and-geography-61a33056-9935-484f-8ac8-f1a89e210877) feature of Excel allow extended types like 'Geography' and properties like 'Location' for data exploration in Excel. These 'Linked Data Types' won't be covered in this 'Basics' topic.
+This discussion is about classic data types like Double, String and Boolean that are used in Excel worksheets, and are passed into and back from VBA or .NET user-defined functions.  I want to explain how different data types are used by Excel for the worksheet data, in VBA for UDF arguments and variable values and correspondingly for UDFs created in the .NET type system. I'll discuss the  basic data types as they appear in these different settings, with a specific focus on user-defined functions (UDFs) created in VBA vs. those created in Excel-DNA with the .NET languages.
 
-I want to explain how different data types are used by Excel for the worksheet data, in VBA for UDF arguments and variable values and correspondingly for UDFs created in the .NET type system. I'll discuss the  basic data types as they appear in these different settings, with a specific focus on user-defined functions (UDFs) created in VBA vs. those created in Excel-DNA with the .NET languages.
+The new [Linked Data Types](https://support.microsoft.com/en-us/office/excel-data-types-stocks-and-geography-61a33056-9935-484f-8ac8-f1a89e210877) feature of Excel allow extended types like 'Geography' and properties like 'Location' for data exploration in Excel. These 'Linked Data Types' won't be covered in this 'Basics' topic.
 
-Data type related issues that I don't cover in detail in this 'Basics' topic include:
-* Linked Data Types in new versions of Excel
+Other data type related issues that I don't cover in detail in this 'Basics' topic include:
 * Dynamic arrays and how they work with UDFs.
-* Data types when dealing with the COM object model.
+* Data types when dealing with the COM object model from .NET.
 * Data transformations in the Excel-DNA UDF implementation - e.g. `Task<>` types for async functions, and 'object handles' that represent references to internal data structures.
 
 > **Argument vs Parameter**
 >
 > I tend to use these two terms inconsistently, and when I first created Excel-DNA I followed the Excel C API documentation usage, which led me somewhat astray.
 > On [StackOverflow](https://stackoverflow.com/questions/156767/whats-the-difference-between-an-argument-and-a-parameter#:~:text=A%20parameter%20is%20a%20variable,pass%20into%20the%20method's%20parameters.&text=Parameter%20is%20variable%20in%20the,that%20gets%20passed%20to%20function.) there is a clear definition of these terms:
-> > A parameter is a variable in a method definition. When a method is called, the arguments are the data you pass into the method's parameters. Parameter is variable in the declaration of function. Argument is the actual value of this variable that gets passed to function.
+> "A parameter is a variable in a method definition. When a method is called, the arguments are the data you pass into the method's parameters. Parameter is variable in the declaration of function. Argument is the actual value of this variable that gets passed to function."
 
 ## Worksheet value types
 
