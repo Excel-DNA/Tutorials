@@ -2,6 +2,8 @@
 
 This discussion is about classic data types like Double, String and Boolean that are used in Excel worksheets, and are passed into and back from VBA or .NET user-defined functions.  I want to explain how different data types are used by Excel for the worksheet data, in VBA for UDF arguments and variable values and correspondingly for UDFs created in the .NET type system. I'll discuss the  basic data types as they appear in these different settings, with a specific focus on user-defined functions (UDFs) created in VBA vs. those created in Excel-DNA with the .NET languages.
 
+[![Excel-DNA - UDF Argument Types from VBA to .NET](http://img.youtube.com/vi/6x0rrFY8egA/0.jpg)](http://www.youtube.com/watch?v=6x0rrFY8egA "Excel-DNA - UDF Argument Types from VBA to .NET")
+
 The new [Linked Data Types](https://support.microsoft.com/en-us/office/excel-data-types-stocks-and-geography-61a33056-9935-484f-8ac8-f1a89e210877) feature of Excel allow extended types like 'Geography' and properties like 'Location' for data exploration in Excel. These 'Linked Data Types' won't be covered in this 'Basics' topic.
 
 Other data type related issues that I don't cover in detail in this 'Basics' topic include:
