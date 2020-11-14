@@ -254,7 +254,7 @@ To ensure compatibility in the calculation results for a workbook between DA Exc
 Looking at the VersionCompare.xlsx workbook we see:
 * Every simple function call like `=dnaAddThem(1,2)` in DA Excel corresponds with a Ctrl+Shift+Enter call like `{=dnaAddThem(2,3)}`in pre-DA Excel.
 * A call with the implicit intersection @-operator like `=@dnaAddThem(1,2)` in DA Excel corresponds with a simple call like `=dnaAddThem(2,3)`in pre-DA Excel.
-* Functions not defined in pre-DA Excel display as `=_xlfn.FILTER(...)` strings
+* Functions not defined in pre-DA Excel appear in formulas as `=_xlfn.FILTER(...)`, while @-operator spill references appear as `=_xlfn.ANCHORARRAY(...)`.
 * Spill references (with #-references) are converted to fixed array formulas with the ???
 
 Below I discuss a partial implementation of resizing arrays that can be used in older Excel.
