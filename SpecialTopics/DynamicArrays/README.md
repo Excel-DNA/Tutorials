@@ -102,6 +102,7 @@ Let's build an array-aware version of the `AddThem` starter function.
 Excel-DNA helps simplify the function a bit when we make the input parameters of type double[,] or object[,] - even with single values we'll get a 1x1 array, so the processing can be more uniform.
 
 ```cs
+    // To implement an array version, we need to decide how to deal with various size combinations
     public static double[,] dnaAddThemDoubleArrays(double[,] val1, double[,] val2)
     {
         // if the inputs are not the same size, we return throw na exception, which returns #VALUE back to Excel
@@ -110,18 +111,48 @@ Excel-DNA helps simplify the function a bit when we make the input parameters of
         int rows2 = val2.GetLength(0);
         int cols2 = val2.GetLength(1);
 
-        if (rows1 != rows2 || cols1 != cols2)
-            throw new ArgumentException("Incompatible array sizes");
-
-        double[,] result = new double[rows1, cols1];
-        for (int i = 0; i < rows1; i++)
+        if (rows1 == rows2 && cols1 == cols2)
         {
-            for (int j = 0; j < cols1; j++)
+            // Same shapes, add elementwise
+            double[,] result = new double[rows1, cols1];
+            for (int i = 0; i < rows1; i++)
             {
-                result[i, j] = val1[i, j] + val2[i, j];
+                for (int j = 0; j < cols1; j++)
+                {
+                    result[i, j] = val1[i, j] + val2[i, j];
+                }
             }
+            return result;
         }
-        return result;
+
+        if (rows1 > 1)
+        {
+            // Lots of rows in input1, we'll take its first column only, and take the columns of input2
+            var rows = rows1;
+            var cols = cols2;
+
+            var output = new double[rows, cols];
+            for (int i = 0; i < rows; i++)
+                for (int j = 0; j < cols; j++)
+                    output[i, j] = val1[i, 0] + val2[0, j];
+
+            return output;
+        }
+        else
+        {
+
+            // Single row in input1, we'll take its columns, and take the rows from input2
+            var rows = rows2;
+            var cols = cols1;
+
+            var output = new double[rows, cols];
+            for (int i = 0; i < rows; i++)
+                for (int j = 0; j < cols; j++)
+                    output[i, j] = val1[0, j] + val2[i, 0];
+
+            return output;
+        }
+
     }
 ```
 
@@ -129,7 +160,7 @@ Excel-DNA helps simplify the function a bit when we make the input parameters of
 To be more careful about the exact input types, change the parameter types to `object[,]` and check the input types during processing.
 
 It's possible to make a general-purpose function that transforms a single-input, single-output function like `dnaAddThem` into an array-aware version.
-With such a helper, we can write a formula like `=ARRAY.MAP2(dnaAddThem, A1:A10, B1:B10)` where we pass the single-valued `dnaAddThem` function without parentheses into the transformation function, where it will be called for every pair of inputs.
+With such a helper, we can write a formula like `=dnaArrayMap2(dnaAddThem, A1:A10, B1:B10)` where we pass the single-valued `dnaAddThem` function without parentheses into the transformation function, where it will be called for every pair of inputs.
 The [`ArrayMap`](https://github.com/Excel-DNA/Samples/tree/master/ArrayMap) sample project explores in more details how this can be done.
 
 ### Implicit intersection
