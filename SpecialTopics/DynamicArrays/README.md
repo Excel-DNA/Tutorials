@@ -11,7 +11,7 @@ For general background on dynamic arrays, there are many excellent introductions
 
 #### Dynamic Array links
 
-[Excel dynamic arrays, functions and formulas by Svetlana Cheusheva from AbleBits](https://www.ablebits.com/office-addins-blog/2020/07/08/excel-dynamic-arrays-functions-formulas/) provides a great introduction to dynamic arrays.
+[Excel dynamic arrays, functions and formulas](https://www.ablebits.com/office-addins-blog/2020/07/08/excel-dynamic-arrays-functions-formulas/) by Svetlana Cheusheva from AbleBits provides a great introduction to dynamic arrays.
 
 Some of Microsoft's notes on Dynamic Arrays:
 * [Dynamic arrays and spilled array behavior](https://support.office.com/en-us/article/dynamic-arrays-and-spilled-array-behavior-205c6b06-03ba-4151-89a1-87a7eb36e531)
@@ -33,18 +33,18 @@ Making add-in functions 'array-friendly' provide elegant solutions to problems t
 I'll start with a simple function that returns an array result - just some strings with an array size that is determined by the input parameters.
 
 ```cs
-public static object dnaMakeArray(int numRows, int numCols)
-{
-    object[,] result = new object [rows, columns];
-    for (int i = 0; i < rows; i++)
+    public static object dnaMakeArray(int rows, int cols)
     {
-        for (int j = 0; j < columns; j++)
+        object[,] result = new object[rows, cols];
+        for (int i = 0; i < rows; i++)
         {
-            result[i,j] = $"{i}|{j}";
+            for (int j = 0; j < cols; j++)
+            {
+                result[i, j] = $"{i}|{j}";
+            }
         }
+        return result;
     }
-    return result;
-}
 ```
 
 Used in a dynamic arrays version of Excel, the result will automatically spill to the right size.
@@ -60,10 +60,34 @@ A few things to note:
 Next we look at a simple function that describes its single input value.
 
 ```cs
-
+    [ExcelFunction(IsMacroType =true)]
+    public static string dnaDescribe([ExcelArgument(AllowReference = true)] object arg)
+    {
+        if (arg is double)
+            return "Double: " + (double)arg;
+        else if (arg is string)
+            return "String: " + (string)arg;
+        else if (arg is bool)
+            return "Boolean: " + (bool)arg;
+        else if (arg is ExcelError)
+            return "ExcelError: " + arg.ToString();
+        else if (arg is object[,])
+            // The object array returned here may contain a mixture of different types,
+            // reflecting the different cell contents.
+            return string.Format("Array[{0},{1}]", ((object[,])arg).GetLength(0), ((object[,])arg).GetLength(1));
+        else if (arg is ExcelMissing)
+            return "<<Missing>>"; // Would have been System.Reflection.Missing in previous versions of ExcelDna
+        else if (arg is ExcelEmpty)
+            return "<<Empty>>"; // Would have been null
+        else if (arg is ExcelReference)
+            // Calling xlfRefText here requires IsMacroType=true for this function.
+            return "Reference: " + XlCall.Excel(XlCall.xlfReftext, arg, true);
+        else
+            return "!? Unheard Of ?!";
+    }
 ```
 
-We can see the following:
+Trying this out with various array inputs, we can see the following:
 * ??? simple values
 
 The `AddThem` starter function taking two numbers and adding, would look like this.
@@ -78,27 +102,27 @@ Let's build an array-aware version of the `AddThem` starter function.
 Excel-DNA helps simplify the function a bit when we make the input parameters of type double[,] or object[,] - even with single values we'll get a 1x1 array, so the processing can be more uniform.
 
 ```cs
-public static double[,] dnaAddThemArrays(double[,] val1, double[,] val2)
-{
-    // if the inputs are not the same size, we return throw na exception, which returns #VALUE back to Excel
-    int rows1 = val1.GetLength(0);
-    int cols1 = val1.GetLength(1);
-    int rows2 = val2.GetLength(0);
-    int cols2 = val2.GetLength(1);
-    
-    if (rows1 <> rows2 || cols1 <> cols2)
-        throw new ArgumentException("Incompatible array sizes");
-    
-    double[,] result = new double[rows1, cols1];
-    for (int i = 0; i < rows; i++)
+    public static double[,] dnaAddThemDoubleArrays(double[,] val1, double[,] val2)
     {
-        for (int j = 0; j < columns; j++)
+        // if the inputs are not the same size, we return throw na exception, which returns #VALUE back to Excel
+        int rows1 = val1.GetLength(0);
+        int cols1 = val1.GetLength(1);
+        int rows2 = val2.GetLength(0);
+        int cols2 = val2.GetLength(1);
+
+        if (rows1 != rows2 || cols1 != cols2)
+            throw new ArgumentException("Incompatible array sizes");
+
+        double[,] result = new double[rows1, cols1];
+        for (int i = 0; i < rows1; i++)
         {
-            result[i,j] = val1[i,j] + val2[i,j];
+            for (int j = 0; j < cols1; j++)
+            {
+                result[i, j] = val1[i, j] + val2[i, j];
+            }
         }
+        return result;
     }
-    return result;
-}
 ```
 
 **NOTE:** One danger of using `double` input parameters is that Excel will convert empty cells to 0-values.
@@ -120,7 +144,7 @@ There are some cases where we don't need to know the input values, but can provi
 An example would be a function that returns only the first few rows of an array:
 
 ```cs
-public static object dnaGetArrayHead([ExcelArgument(AllowReference=true)] object input, int numRows)
+public static object dnaArrayGetHead([ExcelArgument(AllowReference=true)] object input, int numRows)
 {
     if (input is ExcelReference inputRef)
     {
@@ -153,7 +177,7 @@ public static object dnaGetArrayHead([ExcelArgument(AllowReference=true)] object
         }
     }
     // Otherwise we have an error - return #VALUE!
-    return ExcelError.ExcelErrroValue;
+    return ExcelError.ExcelErrorValue;
 }
 ```
 
@@ -166,26 +190,25 @@ These issues are now successfully resolved.
 A small example of an async function returning an array after a specific delay:
 
 ```cs
-public static object dnaMakeArrayAsync(int delayMs, int numRows, int numCols)
-{
-    var funcName = nameof(dnaMakeArrayAsync);
-    var args = new object[] {delayMs, numRows, numCols};
-    
-    return ExcelAsyncUtil.Run(funcName, args, () =>
+    public static object dnaMakeArrayAsync(int delayMs, int rows, int cols)
     {
-        Thread.Sleep(delayMs);
-        object[,] result = new object [rows, columns];
-        for (int i = 0; i < rows; i++)
-        {
-            for (int j = 0; j < columns; j++)
-            {
-                result[i,j] = $"{i}|{j}";
-            }
-        }
-        return result;
-    });
-}
+        var funcName = nameof(dnaMakeArrayAsync);
+        var args = new object[] { delayMs, rows, cols };
 
+        return ExcelAsyncUtil.Run(funcName, args, () =>
+        {
+            Thread.Sleep(delayMs);
+            object[,] result = new object[rows, cols];
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
+                    result[i, j] = $"{i}|{j}";
+                }
+            }
+            return result;
+        });
+    }
 ```
 
 ## Compatibility with non-dynamic arrays Excel versions
