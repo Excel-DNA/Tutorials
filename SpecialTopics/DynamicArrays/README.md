@@ -11,11 +11,13 @@ For general background on dynamic arrays, there are many excellent introductions
 
 #### Dynamic Array links
 
-[Excel dynamic arrays, functions and formulas](https://www.ablebits.com/office-addins-blog/2020/07/08/excel-dynamic-arrays-functions-formulas/) by Svetlana Cheusheva from AbleBits provides a great introduction to dynamic arrays.
+[Excel dynamic arrays, functions and formulas](https://www.ablebits.com/office-addins-blog/2020/07/08/excel-dynamic-arrays-functions-formulas/) by Svetlana Cheusheva from AbleBits provides a friendly and comprehensive introduction to dynamic arrays.
 
 Some of Microsoft's notes on Dynamic Arrays:
+* [Preview of Dynamic Arrays in Excel](https://techcommunity.microsoft.com/t5/excel-blog/preview-of-dynamic-arrays-in-excel/ba-p/252944)
 * [Dynamic arrays and spilled array behavior](https://support.office.com/en-us/article/dynamic-arrays-and-spilled-array-behavior-205c6b06-03ba-4151-89a1-87a7eb36e531)
 * [Dynamic array formulas in non-dynamic aware Excel](https://support.office.com/en-us/article/dynamic-array-formulas-in-non-dynamic-aware-excel-696e164e-306b-4282-ae9d-aa88f5502fa2)
+* [Dynamic array formulas vs. legacy CSE array formulas](https://support.microsoft.com/en-us/office/dynamic-array-formulas-vs-legacy-cse-array-formulas-ca421f1b-fbb2-4c99-9924-df571bd4f1b4)
 * [Implicit intersection operator: @](https://support.office.com/en-us/article/implicit-intersection-operator-ce3be07b-0101-4450-a24e-c1c999be2b34)
 
 Bill Jelen (Mr. Excel) goes into the topic in great details in an [e-book about Dynamic Arrays](https://www.mrexcel.com/products/excel-dynamic-arrays-straight-to-the-point-2nd-edition/), and 
@@ -88,15 +90,26 @@ Next we look at a simple function that describes its single input value.
 ```
 
 Trying this out with various array inputs, we can see the following:
-* ??? simple values
+* a simple reference to the array root cell results in a single value
+* a spill reference with a `#`, like `A1#` will return the whole array
+* a spill reference 
 
-The `AddThem` starter function taking two numbers and adding, would look like this.
+
+### Implicit intersection
+
+Let's now look at implicit intersection and the @-operator, and how these work with Excel-DNA functions.
+
+The `AddThem` starter function takes two numbers and adding, and looks like this.
 ```cs
 public static double dnaAddThem(double val1, double val2)
 {
     return val1 + val2;
 }
 ```
+
+For a simple function like `dnaAddThem` we can see the difference between `=@dnaAddThem(...)` and `=dnaAddThem(...)`. The @-operator version performs the implicit intersection in the corresponding row / column of array inputs, which is the normal behaviour for formulas under pre-DA Excel. The plain `=dnaAddThem(..)` version will translate to a Ctrl+Shift+Enter array in pre-DA Excel. This difference will appear again in the `Range.Formula` vs `Range.Formula2` context below.
+
+### Array aware functions
 
 Let's build an array-aware version of the `AddThem` starter function.
 Excel-DNA helps simplify the function a bit when we make the input parameters of type double[,] or object[,] - even with single values we'll get a 1x1 array, so the processing can be more uniform.
@@ -105,7 +118,6 @@ Excel-DNA helps simplify the function a bit when we make the input parameters of
     // To implement an array version, we need to decide how to deal with various size combinations
     public static double[,] dnaAddThemDoubleArrays(double[,] val1, double[,] val2)
     {
-        // if the inputs are not the same size, we return throw na exception, which returns #VALUE back to Excel
         int rows1 = val1.GetLength(0);
         int cols1 = val1.GetLength(1);
         int rows2 = val2.GetLength(0);
@@ -152,7 +164,6 @@ Excel-DNA helps simplify the function a bit when we make the input parameters of
 
             return output;
         }
-
     }
 ```
 
@@ -162,12 +173,6 @@ To be more careful about the exact input types, change the parameter types to `o
 It's possible to make a general-purpose function that transforms a single-input, single-output function like `dnaAddThem` into an array-aware version.
 With such a helper, we can write a formula like `=dnaArrayMap2(dnaAddThem, A1:A10, B1:B10)` where we pass the single-valued `dnaAddThem` function without parentheses into the transformation function, where it will be called for every pair of inputs.
 The [`ArrayMap`](https://github.com/Excel-DNA/Samples/tree/master/ArrayMap) sample project explores in more details how this can be done.
-
-### Implicit intersection
-
-Let's now look at implicit intersection and the @-operator, and how these work with Excel-DNA functions.
-
-???
 
 ### `ExcelReference` inputs and results
 
@@ -247,12 +252,12 @@ A small example of an async function returning an array after a specific delay:
 To ensure compatibility in the calculation results for a workbook between DA Excel and pre-DA Excel, some formulas are transformed (actually displayed in different ways) between the versions. This particularly affects the new array-related built-in functions added in DA Excel, and any UDFs used (VBA or Excel-DNA based UDFs).
 
 Looking at the VersionCompare.xlsx workbook we see:
-* ??? @ operator
-* ??? _xlfn
-* ??? non-resizing
-* ??? Ctrl_Shift+Enter -> new
+* Every simple function call like `=dnaAddThem(1,2)` in DA Excel corresponds with a Ctrl+Shift+Enter call like `{=dnaAddThem(2,3)}`in pre-DA Excel.
+* A call with the implicit intersection @-operator like `=@dnaAddThem(1,2)` in DA Excel corresponds with a simple call like `=dnaAddThem(2,3)`in pre-DA Excel.
+* Functions not defined in pre-DA Excel display as `=_xlfn.FILTER(...)` strings
+* Spill references (with #-references) are converted to fixed array formulas with the ???
 
-Further below I discuss a partial implementation of resizing arrays that can be used in older Excel.
+Below I discuss a partial implementation of resizing arrays that can be used in older Excel.
 
 ### COM Object Model - `Range.Formula2` to avoid '@'-formulas; `HasSpill` and `SpillRange`
 
