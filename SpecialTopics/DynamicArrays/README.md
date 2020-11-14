@@ -14,15 +14,12 @@ For general background on dynamic arrays, there are many excellent introductions
 [Excel dynamic arrays, functions and formulas by Svetlana Cheusheva from AbleBits](https://www.ablebits.com/office-addins-blog/2020/07/08/excel-dynamic-arrays-functions-formulas/) provides a great introduction to dynamic arrays.
 
 Some of Microsoft's notes on Dynamic Arrays:
-* [Preview of Dynamic Arrays in Excel](https://techcommunity.microsoft.com/t5/excel-blog/preview-of-dynamic-arrays-in-excel)
 * [Dynamic arrays and spilled array behavior](https://support.office.com/en-us/article/dynamic-arrays-and-spilled-array-behavior-205c6b06-03ba-4151-89a1-87a7eb36e531)
 * [Dynamic array formulas in non-dynamic aware Excel](https://support.office.com/en-us/article/dynamic-array-formulas-in-non-dynamic-aware-excel-696e164e-306b-4282-ae9d-aa88f5502fa2)
 * [Implicit intersection operator: @](https://support.office.com/en-us/article/implicit-intersection-operator-ce3be07b-0101-4450-a24e-c1c999be2b34)
 
 Bill Jelen (Mr. Excel) goes into the topic in great details in an [e-book about Dynamic Arrays](https://www.mrexcel.com/products/excel-dynamic-arrays-straight-to-the-point-2nd-edition/), and 
  a [Youtube video](https://youtu.be/ViSEZLPmRvw) showing how powerful the dynamic arrays and mathcing new formulas are.
-
-[Formula vs Formula2](https://docs.microsoft.com/en-us/office/vba/excel/concepts/cells-and-ranges/range-formula-vs-formula2)
 
 And countless more write-ups and videos on YouTube.
 
