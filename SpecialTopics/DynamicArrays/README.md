@@ -23,7 +23,9 @@ Some of Microsoft's notes on Dynamic Arrays:
 Bill Jelen (Mr. Excel) goes into the topic in great details in an [e-book about Dynamic Arrays](https://www.mrexcel.com/products/excel-dynamic-arrays-straight-to-the-point-2nd-edition/), and 
  a [Youtube video](https://youtu.be/ViSEZLPmRvw) showing how powerful the dynamic arrays and mathcing new formulas are.
 
-And countless more write-ups and videos on YouTube.
+Leila Gharani has an [Excel 365 and Dynamic Arrays video playlist](https://www.youtube.com/playlist?list=PLmHVyfmcRKyyPFY31LldHWcJdLzGUPTSP) with lots of tips and powerful applications.
+
+And you'll find lots more with a Bing search and on YouTube.
 
 ## Dynamic arrays and Excel-DNA user-defined functions
 
@@ -59,10 +61,26 @@ A few things to note:
 
 ### Array inputs
 
-Next we look at a simple function that describes its single input value.
+Next we look at a simple function that describes an array input value.
 
 ```cs
-    [ExcelFunction(IsMacroType =true)]
+    // Describes the size of the input array
+    public static object dnaDescribeArray(object[,] input)
+    {
+        var rows = input.GetLength(0);
+        var cols = input.GetLength(1);
+
+        return $"Input: {rows} rows, {cols} columns";
+    }
+```
+
+The function correctly gets the full (and dynamically resized) array when passed a spill reference like `=A1#`.
+
+If the input parameter is type `object`, Excle may pass a single value or array.
+And if the parameter is marked as `AllowReference=true` we might get a sheet reference in the form of an `ExcelReference` object.
+This function shows the eact type and details of the input.
+```cs
+    [ExcelFunction(IsMacroType =true)] // IsMacroType is only required for the handl xlfReftext call below.
     public static string dnaDescribe([ExcelArgument(AllowReference = true)] object arg)
     {
         if (arg is double)
@@ -92,7 +110,7 @@ Next we look at a simple function that describes its single input value.
 Trying this out with various array inputs, we can see the following:
 * a simple reference to the array root cell results in a single value
 * a spill reference with a `#`, like `A1#` will refer to the whole array
-* a spill reference can be 'dereferenced' by adding a + to the reference
+* we don't get information that tells us the input is a spill reference - it is just a reference to the resulting spill region itself
 
 ### Implicit intersection
 
@@ -120,7 +138,6 @@ Looking at the VersionCompare.xlsx workbook we see:
 
 Below I discuss a partial implementation of resizing arrays that can be used in older Excel.
 
-
 ### COM Object Model - `Range.Formula2` to avoid '@'-formulas; `HasSpill` and `SpillRange`
 
 The COM object model has been extended with some extra members added to the `Range` object related to dynamic arrays.
@@ -146,62 +163,6 @@ Application.Range("A1").SpillRange
 ```
 
 ### Array aware functions
-
-Let's build an array-aware version of the `AddThem` starter function.
-Excel-DNA helps simplify the function a bit when we make the input parameters of type double[,] or object[,] - even with single values we'll get a 1x1 array, so the processing can be more uniform.
-
-```cs
-    // To implement an array version, we need to decide how to deal with various size combinations
-    public static object[,] dnaConcatenate(string separator, object[,] val1, object[,] val2)
-    {
-        int rows1 = val1.GetLength(0);
-        int cols1 = val1.GetLength(1);
-        int rows2 = val2.GetLength(0);
-        int cols2 = val2.GetLength(1);
-
-        if (rows1 == rows2 && cols1 == cols2)
-        {
-            // Same shapes, operate elementwise
-            object[,] result = new object[rows1, cols1];
-            for (int i = 0; i < rows1; i++)
-            {
-                for (int j = 0; j < cols1; j++)
-                {
-                    result[i, j] = $"{val1[i, j]}{separator}{val2[i, j]}";
-                }
-            }
-            return result;
-        }
-
-        if (rows1 > 1)
-        {
-            // Lots of rows in input1, we'll take its first column only, and take the columns of input2
-            var rows = rows1;
-            var cols = cols2;
-
-            var output = new object[rows, cols];
-            for (int i = 0; i < rows; i++)
-                for (int j = 0; j < cols; j++)
-                    output[i, j] = $"{val1[i, 0]}{separator}{val2[0, j]}";
-
-            return output;
-        }
-        else
-        {
-
-            // Single row in input1, we'll take its columns, and take the rows from input2
-            var rows = rows2;
-            var cols = cols1;
-
-            var output = new object[rows, cols];
-            for (int i = 0; i < rows; i++)
-                for (int j = 0; j < cols; j++)
-                    output[i, j] = $"{val1[0, j]}{separator}{val2[i, 0]}";
-
-            return output;
-        }
-    }
-```
 
 It's possible to make a general-purpose function that transforms a single-input, single-output function like `dnaAddThem` into an array-aware version.
 With such a helper, we can write a formula like `=dnaArrayMap2(dnaAddThem, A1:A10, B1:B10)` where we pass the single-valued `dnaAddThem` function without parentheses into the transformation function, where it will be called for every pair of inputs.
@@ -279,9 +240,6 @@ A small example of an async function returning an array after a specific delay:
         });
     }
 ```
-
-
-
 
 ### 'Classic' ArrayResizer
 
