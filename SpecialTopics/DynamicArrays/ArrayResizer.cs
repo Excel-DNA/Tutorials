@@ -253,7 +253,7 @@ public class ExcelSelectionHelper : XlCall, IDisposable
 public static class UtilityFunctions
 {
     static bool? _supportsDynamicArrays;
-    [ExcelFunction(IsHidden = true)]
+    [ExcelFunction(IsHidden = false)]
     public static bool dnaSupportsDynamicArrays()
     {
         if (!_supportsDynamicArrays.HasValue)
