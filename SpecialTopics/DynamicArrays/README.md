@@ -11,18 +11,17 @@ For general background on dynamic arrays, there are many excellent introductions
 
 #### Dynamic Array links
 
-[Excel dynamic arrays, functions and formulas by Svetlana Cheusheva from AbleBits](https://www.ablebits.com/office-addins-blog/2020/07/08/excel-dynamic-arrays-functions-formulas/) provides a great introduction to dynamic arrays.
+[Excel dynamic arrays, functions and formulas](https://www.ablebits.com/office-addins-blog/2020/07/08/excel-dynamic-arrays-functions-formulas/) by Svetlana Cheusheva from AbleBits provides a friendly and comprehensive introduction to dynamic arrays.
 
 Some of Microsoft's notes on Dynamic Arrays:
-* [Preview of Dynamic Arrays in Excel](https://techcommunity.microsoft.com/t5/excel-blog/preview-of-dynamic-arrays-in-excel)
+* [Preview of Dynamic Arrays in Excel](https://techcommunity.microsoft.com/t5/excel-blog/preview-of-dynamic-arrays-in-excel/ba-p/252944)
 * [Dynamic arrays and spilled array behavior](https://support.office.com/en-us/article/dynamic-arrays-and-spilled-array-behavior-205c6b06-03ba-4151-89a1-87a7eb36e531)
 * [Dynamic array formulas in non-dynamic aware Excel](https://support.office.com/en-us/article/dynamic-array-formulas-in-non-dynamic-aware-excel-696e164e-306b-4282-ae9d-aa88f5502fa2)
+* [Dynamic array formulas vs. legacy CSE array formulas](https://support.microsoft.com/en-us/office/dynamic-array-formulas-vs-legacy-cse-array-formulas-ca421f1b-fbb2-4c99-9924-df571bd4f1b4)
 * [Implicit intersection operator: @](https://support.office.com/en-us/article/implicit-intersection-operator-ce3be07b-0101-4450-a24e-c1c999be2b34)
 
 Bill Jelen (Mr. Excel) goes into the topic in great details in an [e-book about Dynamic Arrays](https://www.mrexcel.com/products/excel-dynamic-arrays-straight-to-the-point-2nd-edition/), and 
  a [Youtube video](https://youtu.be/ViSEZLPmRvw) showing how powerful the dynamic arrays and mathcing new formulas are.
-
-[Formula vs Formula2](https://docs.microsoft.com/en-us/office/vba/excel/concepts/cells-and-ranges/range-formula-vs-formula2)
 
 And countless more write-ups and videos on YouTube.
 
@@ -36,18 +35,18 @@ Making add-in functions 'array-friendly' provide elegant solutions to problems t
 I'll start with a simple function that returns an array result - just some strings with an array size that is determined by the input parameters.
 
 ```cs
-public static object dnaMakeArray(int numRows, int numCols)
-{
-    object[,] result = new object [rows, columns];
-    for (int i = 0; i < rows; i++)
+    public static object dnaMakeArray(int rows, int cols)
     {
-        for (int j = 0; j < columns; j++)
+        object[,] result = new object[rows, cols];
+        for (int i = 0; i < rows; i++)
         {
-            result[i,j] = $"{i}|{j}";
+            for (int j = 0; j < cols; j++)
+            {
+                result[i, j] = $"{i},{j}";
+            }
         }
+        return result;
     }
-    return result;
-}
 ```
 
 Used in a dynamic arrays version of Excel, the result will automatically spill to the right size.
@@ -63,13 +62,43 @@ A few things to note:
 Next we look at a simple function that describes its single input value.
 
 ```cs
-
+    [ExcelFunction(IsMacroType =true)]
+    public static string dnaDescribe([ExcelArgument(AllowReference = true)] object arg)
+    {
+        if (arg is double)
+            return "Double: " + (double)arg;
+        else if (arg is string)
+            return "String: " + (string)arg;
+        else if (arg is bool)
+            return "Boolean: " + (bool)arg;
+        else if (arg is ExcelError)
+            return "ExcelError: " + arg.ToString();
+        else if (arg is object[,])
+            // The object array returned here may contain a mixture of different types,
+            // reflecting the different cell contents.
+            return string.Format("Array[{0},{1}]", ((object[,])arg).GetLength(0), ((object[,])arg).GetLength(1));
+        else if (arg is ExcelMissing)
+            return "<<Missing>>"; // Would have been System.Reflection.Missing in previous versions of ExcelDna
+        else if (arg is ExcelEmpty)
+            return "<<Empty>>"; // Would have been null
+        else if (arg is ExcelReference)
+            // Calling xlfRefText here requires IsMacroType=true for this function.
+            return "Reference: " + XlCall.Excel(XlCall.xlfReftext, arg, true);
+        else
+            return "!? Unheard Of ?!";
+    }
 ```
 
-We can see the following:
-* ??? simple values
+Trying this out with various array inputs, we can see the following:
+* a simple reference to the array root cell results in a single value
+* a spill reference with a `#`, like `A1#` will refer to the whole array
+* a spill reference can be 'dereferenced' by adding a + to the reference
 
-The `AddThem` starter function taking two numbers and adding, would look like this.
+### Implicit intersection
+
+Let's now look at implicit intersection and the @-operator, and how these work with Excel-DNA functions.
+
+The `AddThem` starter function takes two numbers and adding, and looks like this.
 ```cs
 public static double dnaAddThem(double val1, double val2)
 {
@@ -77,45 +106,106 @@ public static double dnaAddThem(double val1, double val2)
 }
 ```
 
+For a simple function like `dnaAddThem` we can see the difference between `=@dnaAddThem(...)` and `=dnaAddThem(...)`. The @-operator version performs the implicit intersection in the corresponding row / column of array inputs, which is the normal behaviour for formulas under pre-DA Excel. The plain `=dnaAddThem(..)` version will translate to a Ctrl+Shift+Enter array in pre-DA Excel. This difference will appear again in the `Range.Formula` vs `Range.Formula2` context below.
+
+### Compatibility with non-dynamic arrays Excel versions
+
+To ensure compatibility in the calculation results for a workbook between DA Excel and pre-DA Excel, some formulas are transformed (actually displayed in different ways) between the versions. This particularly affects the new array-related built-in functions added in DA Excel, and any UDFs used (VBA or Excel-DNA based UDFs).
+
+Looking at the VersionCompare.xlsx workbook we see:
+* Every simple function call like `=dnaAddThem(1,2)` in DA Excel corresponds with a Ctrl+Shift+Enter call like `{=dnaAddThem(2,3)}`in pre-DA Excel.
+* A call with the implicit intersection @-operator like `=@dnaAddThem(1,2)` in DA Excel corresponds with a simple call like `=dnaAddThem(2,3)`in pre-DA Excel.
+* Functions not defined in pre-DA Excel appear in formulas as `=_xlfn.FILTER(...)`, while @-operator spill references appear as `=_xlfn.ANCHORARRAY(...)`.
+* Spill references (with #-references) are converted to fixed array formulas with the ???
+
+Below I discuss a partial implementation of resizing arrays that can be used in older Excel.
+
+
+### COM Object Model - `Range.Formula2` to avoid '@'-formulas; `HasSpill` and `SpillRange`
+
+The COM object model has been extended with some extra members added to the `Range` object related to dynamic arrays.
+The first things to note is that a formula containing any UDF added to Excel like this:
+```vb
+Application.Range("A1").Formula = "=dnaAddThem(1,2)"
+```
+will be processed and displayed as `=@dnaAddThem(1,2)`, with the @-implicit intersection operator added.
+This transformation of the formula ensures that the code setting `Range.Formula` has exactly the same effect in older Excel versions as in DA Excel.
+
+DA Excel adds a new `Formula2` member to the `Range` object to set formulas that are compatible with dynamic arrays, e.g.
+```vb
+Application.Range("A1").Formula = "=dnaAddThem(1,2)"
+```
+
+Further information is available on the Microsoft page discussing [`Formula vs. Formula2`]([Formula vs Formula2](https://docs.microsoft.com/en-us/office/vba/excel/concepts/cells-and-ranges/range-formula-vs-formula2)
+).
+
+Further Range information properties have been added to get information about the Spill range of a cell.
+```vb
+Application.Range("A1").HasSpill
+Application.Range("A1").SpillRange
+```
+
+### Array aware functions
+
 Let's build an array-aware version of the `AddThem` starter function.
 Excel-DNA helps simplify the function a bit when we make the input parameters of type double[,] or object[,] - even with single values we'll get a 1x1 array, so the processing can be more uniform.
 
 ```cs
-public static double[,] dnaAddThemArrays(double[,] val1, double[,] val2)
-{
-    // if the inputs are not the same size, we return throw na exception, which returns #VALUE back to Excel
-    int rows1 = val1.GetLength(0);
-    int cols1 = val1.GetLength(1);
-    int rows2 = val2.GetLength(0);
-    int cols2 = val2.GetLength(1);
-    
-    if (rows1 <> rows2 || cols1 <> cols2)
-        throw new ArgumentException("Incompatible array sizes");
-    
-    double[,] result = new double[rows1, cols1];
-    for (int i = 0; i < rows; i++)
+    // To implement an array version, we need to decide how to deal with various size combinations
+    public static object[,] dnaConcatenate(string separator, object[,] val1, object[,] val2)
     {
-        for (int j = 0; j < columns; j++)
+        int rows1 = val1.GetLength(0);
+        int cols1 = val1.GetLength(1);
+        int rows2 = val2.GetLength(0);
+        int cols2 = val2.GetLength(1);
+
+        if (rows1 == rows2 && cols1 == cols2)
         {
-            result[i,j] = val1[i,j] + val2[i,j];
+            // Same shapes, operate elementwise
+            object[,] result = new object[rows1, cols1];
+            for (int i = 0; i < rows1; i++)
+            {
+                for (int j = 0; j < cols1; j++)
+                {
+                    result[i, j] = $"{val1[i, j]}{separator}{val2[i, j]}";
+                }
+            }
+            return result;
+        }
+
+        if (rows1 > 1)
+        {
+            // Lots of rows in input1, we'll take its first column only, and take the columns of input2
+            var rows = rows1;
+            var cols = cols2;
+
+            var output = new object[rows, cols];
+            for (int i = 0; i < rows; i++)
+                for (int j = 0; j < cols; j++)
+                    output[i, j] = $"{val1[i, 0]}{separator}{val2[0, j]}";
+
+            return output;
+        }
+        else
+        {
+
+            // Single row in input1, we'll take its columns, and take the rows from input2
+            var rows = rows2;
+            var cols = cols1;
+
+            var output = new object[rows, cols];
+            for (int i = 0; i < rows; i++)
+                for (int j = 0; j < cols; j++)
+                    output[i, j] = $"{val1[0, j]}{separator}{val2[i, 0]}";
+
+            return output;
         }
     }
-    return result;
-}
 ```
 
-**NOTE:** One danger of using `double` input parameters is that Excel will convert empty cells to 0-values.
-To be more careful about the exact input types, change the parameter types to `object[,]` and check the input types during processing.
-
 It's possible to make a general-purpose function that transforms a single-input, single-output function like `dnaAddThem` into an array-aware version.
-With such a helper, we can write a formula like `=ARRAY.MAP2(dnaAddThem, A1:A10, B1:B10)` where we pass the single-valued `dnaAddThem` function without parentheses into the transformation function, where it will be called for every pair of inputs.
+With such a helper, we can write a formula like `=dnaArrayMap2(dnaAddThem, A1:A10, B1:B10)` where we pass the single-valued `dnaAddThem` function without parentheses into the transformation function, where it will be called for every pair of inputs.
 The [`ArrayMap`](https://github.com/Excel-DNA/Samples/tree/master/ArrayMap) sample project explores in more details how this can be done.
-
-### Implicit intersection
-
-Let's now look at implicit intersection and the @-operator, and how these work with Excel-DNA functions.
-
-???
 
 ### `ExcelReference` inputs and results
 
@@ -123,7 +213,7 @@ There are some cases where we don't need to know the input values, but can provi
 An example would be a function that returns only the first few rows of an array:
 
 ```cs
-public static object dnaGetArrayHead([ExcelArgument(AllowReference=true)] object input, int numRows)
+public static object dnaArrayGetHead([ExcelArgument(AllowReference=true)] object input, int numRows)
 {
     if (input is ExcelReference inputRef)
     {
@@ -156,7 +246,7 @@ public static object dnaGetArrayHead([ExcelArgument(AllowReference=true)] object
         }
     }
     // Otherwise we have an error - return #VALUE!
-    return ExcelError.ExcelErrroValue;
+    return ExcelError.ExcelErrorValue;
 }
 ```
 
@@ -169,68 +259,36 @@ These issues are now successfully resolved.
 A small example of an async function returning an array after a specific delay:
 
 ```cs
-public static object dnaMakeArrayAsync(int delayMs, int numRows, int numCols)
-{
-    var funcName = nameof(dnaMakeArrayAsync);
-    var args = new object[] {delayMs, numRows, numCols};
-    
-    return ExcelAsyncUtil.Run(funcName, args, () =>
+    public static object dnaMakeArrayAsync(int delayMs, int rows, int cols)
     {
-        Thread.Sleep(delayMs);
-        object[,] result = new object [rows, columns];
-        for (int i = 0; i < rows; i++)
+        var funcName = nameof(dnaMakeArrayAsync);
+        var args = new object[] { delayMs, rows, cols };
+
+        return ExcelAsyncUtil.Run(funcName, args, () =>
         {
-            for (int j = 0; j < columns; j++)
+            Thread.Sleep(delayMs);
+            object[,] result = new object[rows, cols];
+            for (int i = 0; i < rows; i++)
             {
-                result[i,j] = $"{i}|{j}";
+                for (int j = 0; j < cols; j++)
+                {
+                    result[i, j] = $"{i}|{j}";
+                }
             }
-        }
-        return result;
-    });
-}
-
+            return result;
+        });
+    }
 ```
 
-## Compatibility with non-dynamic arrays Excel versions
 
-To ensure compatibility in the calculation results for a workbook between DA Excel and pre-DA Excel, some formulas are transformed (actually displayed in different ways) between the versions. This particularly affects the new array-related built-in functions added in DA Excel, and any UDFs used (VBA or Excel-DNA based UDFs).
 
-Looking at the VersionCompare.xlsx workbook we see:
-* ??? @ operator
-* ??? _xlfn
-* ??? non-resizing
-* ??? Ctrl_Shift+Enter -> new
-
-Further below I discuss a partial implementation of resizing arrays that can be used in older Excel.
-
-### COM Object Model - `Range.Formula2` to avoid '@'-formulas; `HasSpill` and `SpillRange`
-
-The COM object model has been extended with some extra members added to the `Range` object related to dynamic arrays.
-The first things to note is that a formula containing any UDF added to Excel like this:
-```vb
-Application.Range("A1").Formula = "=dnaAddThem(1,2)"
-```
-will be processed and displayed as `=@dnaAddThem(1,2)`, with the @-implicit intersection operator added.
-This transformation of the formula ensures that the code setting `Range.Formula` has exactly the same effect in older Excel versions as in DA Excel.
-
-DA Excel adds a new `Formula2` member to the `Range` object to set formulas that are compatible with dynamic arrays, e.g.
-```vb
-Application.Range("A1").Formula = "=dnaAddThem(1,2)"
-```
-
-Further information is available on the Microsoft page discussing [`Formula vs. Formula2`]([Formula vs Formula2](https://docs.microsoft.com/en-us/office/vba/excel/concepts/cells-and-ranges/range-formula-vs-formula2)
-).
-
-Further Range information properties have been added to get information about the Spill range of a cell.
-```vb
-Application.Range("A1").HasSpill
-Application.Range("A1").SpillRange
-```
 
 ### 'Classic' ArrayResizer
 
 Before the advent of dynamic arrays in Excel, I created a helper function to manage array results from functions called the `ArrayResizer`.
 Find more details in the [ArrayResizer sample on GitHub](https://github.com/Excel-DNA/Samples?arrayResizer).
+
+One of the limitations of the ArrayResizer is that RTD-based async and streaming array functions are not supported.
 
 #### Testing for whether the running Excel instance supports dynamic arrays
 
@@ -238,22 +296,22 @@ In the ArrayResizer sample, and otherwise, it might be useful to know if an Exce
 This (hidden) function check to the presence of the `=FILTER` built-in function to determine this:
 
 ```cs
-        static bool? _supportsDynamicArrays;  
-        [ExcelFunction(IsHidden=true)]
-        public static bool dnaSupportsDynamicArrays()
+    static bool? _supportsDynamicArrays;  
+    [ExcelFunction(IsHidden=true)]
+    public static bool dnaSupportsDynamicArrays()
+    {
+        if (!_supportsDynamicArrays.HasValue)
         {
-            if (!_supportsDynamicArrays.HasValue)
+            try
             {
-                try
-                {
-                    var result = XlCall.Excel(614, new object[] { 1 }, new object[] { true });
-                    _supportsDynamicArrays = true;
-                }
-                catch
-                {
-                    _supportsDynamicArrays = false;
-                }
+                var result = XlCall.Excel(614, new object[] { 1 }, new object[] { true });
+                _supportsDynamicArrays = true;
             }
-            return _supportsDynamicArrays.Value;
+            catch
+            {
+                _supportsDynamicArrays = false;
+            }
         }
+        return _supportsDynamicArrays.Value;
+    }
 ```
