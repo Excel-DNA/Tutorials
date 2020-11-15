@@ -4,6 +4,8 @@ The support for 'Dynamic Arrays' is a major new Excel feature available in the O
 There are many excellent resources available that explore the power of dynamic arrays - I provide a few links below as introduction to the topic.
 In this tutorial I will show how dynamic arrays interact with user-defined functions defined in Excel-DNA add-ins.
 
+[![Excel-DNA and Dynamic Arrays](http://img.youtube.com/vi/XUoN5NUBL2M/0.jpg)](http://www.youtube.com/watch?v=XUoN5NUBL2M "Excel-DNA and Dynamic Arrays")
+
 ## Background
 
 For this tutorial I will assume you are already familiar with the fundamentals of Excel-DNA and the dynamic arrays feature in Excel.
