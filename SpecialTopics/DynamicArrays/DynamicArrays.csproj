@@ -46,8 +46,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArrayMap.cs" />
     <Compile Include="ArrayResizer.cs" />
-    <Compile Include="Functions.cs" />
+    <Compile Include="ExampleFunctions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
