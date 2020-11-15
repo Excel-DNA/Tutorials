@@ -109,6 +109,43 @@ public static double dnaAddThem(double val1, double val2)
 
 For a simple function like `dnaAddThem` we can see the difference between `=@dnaAddThem(...)` and `=dnaAddThem(...)`. The @-operator version performs the implicit intersection in the corresponding row / column of array inputs, which is the normal behaviour for formulas under pre-DA Excel. The plain `=dnaAddThem(..)` version will translate to a Ctrl+Shift+Enter array in pre-DA Excel. This difference will appear again in the `Range.Formula` vs `Range.Formula2` context below.
 
+### Compatibility with non-dynamic arrays Excel versions
+
+To ensure compatibility in the calculation results for a workbook between DA Excel and pre-DA Excel, some formulas are transformed (actually displayed in different ways) between the versions. This particularly affects the new array-related built-in functions added in DA Excel, and any UDFs used (VBA or Excel-DNA based UDFs).
+
+Looking at the VersionCompare.xlsx workbook we see:
+* Every simple function call like `=dnaAddThem(1,2)` in DA Excel corresponds with a Ctrl+Shift+Enter call like `{=dnaAddThem(2,3)}`in pre-DA Excel.
+* A call with the implicit intersection @-operator like `=@dnaAddThem(1,2)` in DA Excel corresponds with a simple call like `=dnaAddThem(2,3)`in pre-DA Excel.
+* Functions not defined in pre-DA Excel appear in formulas as `=_xlfn.FILTER(...)`, while @-operator spill references appear as `=_xlfn.ANCHORARRAY(...)`.
+* Spill references (with #-references) are converted to fixed array formulas with the ???
+
+Below I discuss a partial implementation of resizing arrays that can be used in older Excel.
+
+
+### COM Object Model - `Range.Formula2` to avoid '@'-formulas; `HasSpill` and `SpillRange`
+
+The COM object model has been extended with some extra members added to the `Range` object related to dynamic arrays.
+The first things to note is that a formula containing any UDF added to Excel like this:
+```vb
+Application.Range("A1").Formula = "=dnaAddThem(1,2)"
+```
+will be processed and displayed as `=@dnaAddThem(1,2)`, with the @-implicit intersection operator added.
+This transformation of the formula ensures that the code setting `Range.Formula` has exactly the same effect in older Excel versions as in DA Excel.
+
+DA Excel adds a new `Formula2` member to the `Range` object to set formulas that are compatible with dynamic arrays, e.g.
+```vb
+Application.Range("A1").Formula = "=dnaAddThem(1,2)"
+```
+
+Further information is available on the Microsoft page discussing [`Formula vs. Formula2`]([Formula vs Formula2](https://docs.microsoft.com/en-us/office/vba/excel/concepts/cells-and-ranges/range-formula-vs-formula2)
+).
+
+Further Range information properties have been added to get information about the Spill range of a cell.
+```vb
+Application.Range("A1").HasSpill
+Application.Range("A1").SpillRange
+```
+
 ### Array aware functions
 
 Let's build an array-aware version of the `AddThem` starter function.
@@ -116,7 +153,7 @@ Excel-DNA helps simplify the function a bit when we make the input parameters of
 
 ```cs
     // To implement an array version, we need to decide how to deal with various size combinations
-    public static double[,] dnaAddThemDoubleArrays(double[,] val1, double[,] val2)
+    public static object[,] dnaConcatenate(string separator, object[,] val1, object[,] val2)
     {
         int rows1 = val1.GetLength(0);
         int cols1 = val1.GetLength(1);
@@ -125,13 +162,13 @@ Excel-DNA helps simplify the function a bit when we make the input parameters of
 
         if (rows1 == rows2 && cols1 == cols2)
         {
-            // Same shapes, add elementwise
-            double[,] result = new double[rows1, cols1];
+            // Same shapes, operate elementwise
+            object[,] result = new object[rows1, cols1];
             for (int i = 0; i < rows1; i++)
             {
                 for (int j = 0; j < cols1; j++)
                 {
-                    result[i, j] = val1[i, j] + val2[i, j];
+                    result[i, j] = $"{val1[i, j]}{separator}{val2[i, j]}";
                 }
             }
             return result;
@@ -143,10 +180,10 @@ Excel-DNA helps simplify the function a bit when we make the input parameters of
             var rows = rows1;
             var cols = cols2;
 
-            var output = new double[rows, cols];
+            var output = new object[rows, cols];
             for (int i = 0; i < rows; i++)
                 for (int j = 0; j < cols; j++)
-                    output[i, j] = val1[i, 0] + val2[0, j];
+                    output[i, j] = $"{val1[i, 0]}{separator}{val2[0, j]}";
 
             return output;
         }
@@ -157,18 +194,15 @@ Excel-DNA helps simplify the function a bit when we make the input parameters of
             var rows = rows2;
             var cols = cols1;
 
-            var output = new double[rows, cols];
+            var output = new object[rows, cols];
             for (int i = 0; i < rows; i++)
                 for (int j = 0; j < cols; j++)
-                    output[i, j] = val1[0, j] + val2[i, 0];
+                    output[i, j] = $"{val1[0, j]}{separator}{val2[i, 0]}";
 
             return output;
         }
     }
 ```
-
-**NOTE:** One danger of using `double` input parameters is that Excel will convert empty cells to 0-values.
-To be more careful about the exact input types, change the parameter types to `object[,]` and check the input types during processing.
 
 It's possible to make a general-purpose function that transforms a single-input, single-output function like `dnaAddThem` into an array-aware version.
 With such a helper, we can write a formula like `=dnaArrayMap2(dnaAddThem, A1:A10, B1:B10)` where we pass the single-valued `dnaAddThem` function without parentheses into the transformation function, where it will be called for every pair of inputs.
@@ -247,46 +281,15 @@ A small example of an async function returning an array after a specific delay:
     }
 ```
 
-## Compatibility with non-dynamic arrays Excel versions
 
-To ensure compatibility in the calculation results for a workbook between DA Excel and pre-DA Excel, some formulas are transformed (actually displayed in different ways) between the versions. This particularly affects the new array-related built-in functions added in DA Excel, and any UDFs used (VBA or Excel-DNA based UDFs).
 
-Looking at the VersionCompare.xlsx workbook we see:
-* Every simple function call like `=dnaAddThem(1,2)` in DA Excel corresponds with a Ctrl+Shift+Enter call like `{=dnaAddThem(2,3)}`in pre-DA Excel.
-* A call with the implicit intersection @-operator like `=@dnaAddThem(1,2)` in DA Excel corresponds with a simple call like `=dnaAddThem(2,3)`in pre-DA Excel.
-* Functions not defined in pre-DA Excel appear in formulas as `=_xlfn.FILTER(...)`, while @-operator spill references appear as `=_xlfn.ANCHORARRAY(...)`.
-* Spill references (with #-references) are converted to fixed array formulas with the ???
-
-Below I discuss a partial implementation of resizing arrays that can be used in older Excel.
-
-### COM Object Model - `Range.Formula2` to avoid '@'-formulas; `HasSpill` and `SpillRange`
-
-The COM object model has been extended with some extra members added to the `Range` object related to dynamic arrays.
-The first things to note is that a formula containing any UDF added to Excel like this:
-```vb
-Application.Range("A1").Formula = "=dnaAddThem(1,2)"
-```
-will be processed and displayed as `=@dnaAddThem(1,2)`, with the @-implicit intersection operator added.
-This transformation of the formula ensures that the code setting `Range.Formula` has exactly the same effect in older Excel versions as in DA Excel.
-
-DA Excel adds a new `Formula2` member to the `Range` object to set formulas that are compatible with dynamic arrays, e.g.
-```vb
-Application.Range("A1").Formula = "=dnaAddThem(1,2)"
-```
-
-Further information is available on the Microsoft page discussing [`Formula vs. Formula2`]([Formula vs Formula2](https://docs.microsoft.com/en-us/office/vba/excel/concepts/cells-and-ranges/range-formula-vs-formula2)
-).
-
-Further Range information properties have been added to get information about the Spill range of a cell.
-```vb
-Application.Range("A1").HasSpill
-Application.Range("A1").SpillRange
-```
 
 ### 'Classic' ArrayResizer
 
 Before the advent of dynamic arrays in Excel, I created a helper function to manage array results from functions called the `ArrayResizer`.
 Find more details in the [ArrayResizer sample on GitHub](https://github.com/Excel-DNA/Samples?arrayResizer).
+
+One of the limitations of the ArrayResizer is that RTD-based async and streaming array functions are not supported.
 
 #### Testing for whether the running Excel instance supports dynamic arrays
 
@@ -294,22 +297,22 @@ In the ArrayResizer sample, and otherwise, it might be useful to know if an Exce
 This (hidden) function check to the presence of the `=FILTER` built-in function to determine this:
 
 ```cs
-        static bool? _supportsDynamicArrays;  
-        [ExcelFunction(IsHidden=true)]
-        public static bool dnaSupportsDynamicArrays()
+    static bool? _supportsDynamicArrays;  
+    [ExcelFunction(IsHidden=true)]
+    public static bool dnaSupportsDynamicArrays()
+    {
+        if (!_supportsDynamicArrays.HasValue)
         {
-            if (!_supportsDynamicArrays.HasValue)
+            try
             {
-                try
-                {
-                    var result = XlCall.Excel(614, new object[] { 1 }, new object[] { true });
-                    _supportsDynamicArrays = true;
-                }
-                catch
-                {
-                    _supportsDynamicArrays = false;
-                }
+                var result = XlCall.Excel(614, new object[] { 1 }, new object[] { true });
+                _supportsDynamicArrays = true;
             }
-            return _supportsDynamicArrays.Value;
+            catch
+            {
+                _supportsDynamicArrays = false;
+            }
         }
+        return _supportsDynamicArrays.Value;
+    }
 ```
