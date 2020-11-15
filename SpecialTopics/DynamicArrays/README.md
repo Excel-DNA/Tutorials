@@ -42,7 +42,7 @@ I'll start with a simple function that returns an array result - just some strin
         {
             for (int j = 0; j < cols; j++)
             {
-                result[i, j] = $"{i}|{j}";
+                result[i, j] = $"{i},{j}";
             }
         }
         return result;
@@ -91,9 +91,8 @@ Next we look at a simple function that describes its single input value.
 
 Trying this out with various array inputs, we can see the following:
 * a simple reference to the array root cell results in a single value
-* a spill reference with a `#`, like `A1#` will return the whole array
-* a spill reference 
-
+* a spill reference with a `#`, like `A1#` will refer to the whole array
+* a spill reference can be 'dereferenced' by adding a + to the reference
 
 ### Implicit intersection
 
