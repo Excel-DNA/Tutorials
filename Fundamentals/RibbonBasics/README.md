@@ -29,6 +29,8 @@ The first approach requires admin permissions on the machine, but has the advant
 Excel has a setting to display any errors in interface extensions like the ribbon. Enabling this settings is a great help while developing a ribbon extension.
 It can be found under **Tools -> Options -> Advanced: Show add-in user interface errors**.
 
+![Excel-show-interface-errors](https://user-images.githubusercontent.com/414659/99848436-7397c080-2b82-11eb-8543-c4b20e94ede6.jpg)
+
 3. Reference the Excel COM interop assemblies
 
 Next we need to add a reference to the COM interop assemblies to our add-in. This will allow us to easily use the Excel COM object model from our add-in.
