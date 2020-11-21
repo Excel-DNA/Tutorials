@@ -1,24 +1,25 @@
 # Ribbon Basics
 
 In this tutorial we will add a ribbon extension to an Excel-DNA add-in.
-The Office ribbon extensions are defined in an .xml file which we will add to the project.
-Then a class is defined to process the ribbon callback methods, either to react to commands like a button press or to update the ribbon interface.
+The Office ribbon extensions are defined in an .xml markup format which we will add to the project.
+Then we define a class to process the ribbon callback methods, to react to commands like a button press.
 
 For this tutorial I will use a Visual Basic add-in; everything works similar in a C# project.
 
 There are some more advanced topics not covered in this tutorial:
+* Show how to change or enable elements of the interface based on some internal state.
 * Request a ribbon interface update from an event handler or external trigger.
-* Comparing the native ribbon interface we use here, with the high-level wrapper provided by VSTO.
-* Internals of how the ribbon implementation works in Excel-DNA.
+* Compare the native ribbon interface we use here, with the high-level wrapper provided by VSTO.
+* Explain internals of how the ribbon implementation works in Excel-DNA.
 
 ## Prepare
 
 Our starting point is a simple Excel-DNA add-in that declares a single UDF as a test.
-To prepare the environment and our project for the ribbon extensions, we add two steps.
+To prepare the environment for working on the ribbon extensions, we add two steps.
 
 1. Install XML schemas (optional)
 
-To help get IntelliSense help for the ribbon extension, we can either 
+To get IntelliSense help for the ribbon extension, we can either 
 * install the `Excel-DNA XML Schemas` extension to Visual Studio, or 
 * install the `ExcelDna.XmlSchemas` package in our add-in.
 
@@ -30,13 +31,6 @@ Excel has a setting to display any errors in interface extensions like the ribbo
 It can be found under **Tools -> Options -> Advanced: Show add-in user interface errors**.
 
 ![Excel-show-interface-errors](https://user-images.githubusercontent.com/414659/99848436-7397c080-2b82-11eb-8543-c4b20e94ede6.jpg)
-
-3. Reference the Excel COM interop assemblies
-
-Next we need to add a reference to the COM interop assemblies to our add-in. This will allow us to easily use the Excel COM object model from our add-in.
-To do this, I add the NuGet package 'ExcelDna.Interop' to the project. It would also be possible to reference the COM libraries directly.
-
-The `ExcelDna.Interop` package includes the Excel 2010 version of the COM object model. This means an add-in that uses these features should work under any Excel 2010 and later versions. However, newer features are not available.
 
 ## Add the ribbon xml markup
 
@@ -96,6 +90,16 @@ We can now build and run the add-in, to test the new ribbon.
 ## Interact with the Excel COM object model
 
 Typically you would run some macro command form the ribbon handler, which would interact with the Excel COM object model similar to a VBA macro.
+
+### Reference the Excel COM interop assemblies
+
+First, we add a reference to the COM interop assemblies to our add-in. This will allow us to easily use the Excel COM object model from our add-in.
+To do this, add the NuGet package 'ExcelDna.Interop' to the project. It would also be possible to reference the COM libraries directly.
+
+The `ExcelDna.Interop` package includes the Excel 2010 version of the COM object model. This means an add-in that uses these features should work under any Excel 2010 and later versions. However, newer features are not available.
+
+### Add macro code to the ribbon callback
+
 In the Excel-DNA case, this means we need to get hold of the root Application object with a call to `ExcelDnaUtil.Application`.
 From there we can use the object model in a similar way to VBA.
 
@@ -115,7 +119,7 @@ Imports ExcelDna.Integration
         app = ExcelDnaUtil.Application      ' This gets the root Excel Application object from the Excel-DNA environment
         rng = app.Range("A1")               ' Get a Range object for cell A1 on the ActiveSheet
         
-        rng.Value = "Hello from .NET!"
+        rng.Value = "Hello from .NET!"      ' Set the value in that cell
     End Sub
 
 ```
