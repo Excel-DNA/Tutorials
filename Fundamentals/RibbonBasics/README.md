@@ -59,7 +59,7 @@ Edit the `<Project>-AddIn.dna` file, and add the following markup under the `<Dn
 </CustomUI>
 ```
 
-Note that there are two nested tags called `<CusomtUI>` and `<customUI>` respectively.
+Note that there are two nested tags called `<CustomUI>` and `<customUI>` respectively.
 
 ## Add the Ribbon handler code
 
