@@ -129,9 +129,10 @@ Imports ExcelDna.Integration
 Next we add an image to display on the ribbon button.
 
 For this we adjust the markup
-1. Add a `loadImage` callback to the `customUI` tag. Excel-DNA internally implements the `LoadImage` method on the `ExcelRibbon` base class.
-2. Add an `image` attribute to the `button` to select the image.
-3. Add an `Image` tag in the .dna file to identify and pack the image file, with the `Path` pointing to the location - in this case I've put it under an Images folder in the project, so I'll use `Path='Images\MagixWand.png`. I also add `Pack='true'` so that the image file will be included in the packed .xll file.
+1. Add an image file to our project, (I put it an a project folder as `Images\MagicWand.png`) and set its `Copy to Output Directory` property to `Copy if Newer`. That ensures the image file will be available when debugging.
+2. Add a `loadImage` callback to the `customUI` tag. Excel-DNA internally implements the `LoadImage` method on the `ExcelRibbon` base class.
+3. Add an `image` attribute to the `button` to select the image.
+4. Add an `Image` tag in the .dna file to identify and pack the image file, with the `Path` pointing to the location - in this case I've put it under an Images folder in the project, so I'll use `Path='Images\MagicWand.png`. I also add `Pack='true'` so that the image file will be included in the packed .xll file.
 
 The .dna file gets these changes:
 
@@ -152,6 +153,7 @@ The .dna file gets these changes:
 </CustomUI>
 
 <Image Name='MagicWand' Path='Images\MagicWand.png' Pack='true' />
+
 ```
 
 Now build and run to see the image added to the button in Excel.
