@@ -53,7 +53,7 @@ To enable the Excel-DNA IntelliSense requires the ExcelDna.IntelliSense.xll (or 
 
 #### Create function descriptions worksheet
 
-| FunctionInfo      | 1              |                |                |                  |      |                |                      |                   |
+| FunctionInfo      | 1              | Temperature    |                |                  |      |                |                      |                   |
 |-------------------|----------------|----------------|----------------|------------------|------|----------------|----------------------|-------------------|
 | TempCelsius       | converts ...   |                | tempFahrenheit | is the temper... |      |                |                      |                   |
 | TempFahrenheit    | converts ...   |                | tempCelsius    | is the temper... |      |                |                      |                   |
@@ -63,6 +63,7 @@ Details of the sheet format are:
 * The name of the sheet must be '\_IntelliSense\_'; it may be a hidden sheet
 * The first cell (A1) must contain the string 'FunctionInfo'
 * The next cell across (B1) must contain the value 1
+* The next call across (C1) may contain a category for the functions (not read by the IntelliSense add-in, used only in the `MacroOptions` code shown below)
 * From the second row down, each row contains the information for a single function
   * Function name
   * Function description
@@ -106,8 +107,6 @@ The contents of the xml file, matching the above example worksheet, would be
 </IntelliSense>
 ```
 
-
- 
 #### Download the ExcelDna.IntelliSense(64).xll add-in
 
 The newest release of the IntelliSense add-in can be found here:
@@ -119,4 +118,68 @@ To test you can just follow File -> Open and select the .xll file. Installing th
 
 ### Application.MacroOptions
 
+Function and argument descriptions for VBA functions can be registered for display in the 'Function Arguments' dialog with the `Application.MacroOptions` method.
+If we have already defined this information on a worksheet as described above, it is convenient to add `MacroOptions` registration from the same sheet.
+A macro that would do this might look like this
 
+```vb
+
+Sub RegisterMacroOptions()
+    Dim ws As Worksheet
+    Dim row As Range
+    Dim rowi As Integer
+    Dim coli As Integer
+    Dim args As Integer
+    
+    Dim functionName As String
+    Dim functionDescription As String
+    Dim helpTopic As String
+    Dim ArgDescriptions() As String
+    
+    Set ws = ThisWorkbook.Worksheets("_IntelliSense_")
+    
+    rowi = 2
+    
+    Do While True
+        Set row = ws.Rows(rowi)
+        functionName = row.Cells(1, 1).Value
+        If functionName = "" Then
+            Exit Do
+        End If
+        
+        functionDescription = row.Cells(1, 2)
+        helpTopic = row.Cells(1, 3)
+        
+        args = 0
+        For coli = 5 To 45 Step 2
+            If row.Cells(1, coli) = "" Then
+                Exit For
+            End If
+            
+            args = args + 1
+            ReDim Preserve ArgDescriptions(args - 1)
+            ArgDescriptions(args - 1) = row.Cells(1, coli)
+        Next
+        
+        Application.MacroOptions functionName, functionDescription, False, "", False, "", "", "", "", helpTopic, ArgDescriptions
+        rowi = rowi + 1
+    Loop
+End Sub
+```
+
+We have to decide when to run this registration code. For normal workbooks, we can run in the `Workbook_Open` event of the ThisWorkbook object.
+
+``` vb
+Private Sub Workbook_Open()
+    RegisterMacroOptions
+End Sub
+```
+
+But if we save the workbook as an add-in (as an .xlam file), we need to move it to the `Workbook_AddInInstall` event:
+```vb
+Private Sub Workbook_AddinInstall()
+    RegisterMacroOptions
+End Sub
+```
+
+The end result is a workbook or add-in that has in-sheet IntelliSense when the `ExcelDna.IntelliSense(64).xll` add-in is loaded, and also shows  the fucntion descriptions in the Excel `Function Arguments` dialog.
