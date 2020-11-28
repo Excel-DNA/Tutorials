@@ -2,7 +2,7 @@
 
 This tutorial shows you how to enable in-sheet IntelliSense help for VBA Functions.
 
-![IntelliSensein action](https://user-images.githubusercontent.com/414659/100516864-78b2cc00-318f-11eb-886c-5e17d224e77b.png)
+![IntelliSense in action](https://user-images.githubusercontent.com/414659/100517124-37bbb700-3191-11eb-8c3b-8125322a6f63.gif)
 
 When you edit a formula on a worksheet, Excel has two mechanisms to assist you in entering the right function call information.
 
