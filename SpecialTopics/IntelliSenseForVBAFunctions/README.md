@@ -56,11 +56,12 @@ You then provide function descriptions in:
 
 #### Create function descriptions worksheet
 
-| FunctionInfo      | 1              | Temperature     |                |                  |      |                |                      |                   |
-|-------------------|----------------|-----------------|----------------|------------------|------|----------------|----------------------|-------------------|
-| TempCelsius       | converts ...   | https://en.w... | tempFahrenheit | is the temper... |      |                |                      |                   |
-| TempFahrenheit    | converts ...   | https://en.w... | tempCelsius    | is the temper... |      |                |                      |                   |
-| TempDeltaFromHeat | calculates ... | https://www...  | heatDelta      | is the amount... | mass | is the mass... | specificHeatCapacity | is the specific.. |
+| | A                 | B              | C               | D              | E                | F    | G              | H                    | I                 |
+|-|-------------------|----------------|-----------------|----------------|------------------|------|----------------|----------------------|-------------------|
+|1| FunctionInfo      | 1              | Temperature     |                |                  |      |                |                      |                   |
+|2| TempCelsius       | converts ...   | https://en.w... | tempFahrenheit | is the temper... |      |                |                      |                   |
+|3| TempFahrenheit    | converts ...   | https://en.w... | tempCelsius    | is the temper... |      |                |                      |                   |
+|4| TempDeltaFromHeat | calculates ... | https://www...  | heatDelta      | is the amount... | mass | is the mass... | specificHeatCapacity | is the specific.. |
 
 Details of the sheet format are:
 * The name of the sheet must be '\_IntelliSense\_'; it may be a hidden sheet
