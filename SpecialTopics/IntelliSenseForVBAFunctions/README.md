@@ -2,7 +2,7 @@
 
 This tutorial shows you how to enable in-sheet IntelliSense help for VBA Functions.
 
-> TODO: Pic
+![IntelliSensein action](https://user-images.githubusercontent.com/414659/100516864-78b2cc00-318f-11eb-886c-5e17d224e77b.png)
 
 When you edit a formula on a worksheet, Excel has two mechanisms to assist you in entering the right function call information.
 
@@ -10,13 +10,15 @@ When you edit a formula on a worksheet, Excel has two mechanisms to assist you i
 
 This helps you to to select a function and enter or select the right arguments for the function.
 
-> TODO: pic
+![FunctionArguments](https://user-images.githubusercontent.com/414659/100516737-8ca9fe00-318e-11eb-9bc8-299855869a59.png)
 
 ### The in-sheet 'Formula AutoComplete' features
 
 While entering the formula in the cell, the function list and function details help is displayed as an IntelliSense-style popup.
 
-> TODO: pic
+![FunctionSelection](https://user-images.githubusercontent.com/414659/100516786-ef02fe80-318e-11eb-8c85-606902c43e1d.png)
+![FunctionEntry](https://user-images.githubusercontent.com/414659/100516789-f924fd00-318e-11eb-97f3-31421c5a9e18.png)
+
 
 ### Descriptions and help information for user-defined functions (UDFs)
 
@@ -46,10 +48,11 @@ Function TempDeltaFromHeat(heatDelta As Double, mass As Double, specificHeatCapa
 End Function
 ```
 
-To enable the Excel-DNA IntelliSense requires the ExcelDna.IntelliSense.xll (or ExcelDna.IntelliSense64.xll) add-in to be loaded, and then function descriptions provided as:
-* A special (possibly hidden) worksheet,
-* An extra file next to the workbook or add-in with the descriptions in xml format, or
-* The same xml format information saved in the 'CustomXML' properties of the workbook.
+To enable the Excel-DNA IntelliSense you need to load the ExcelDna.IntelliSense.xll (or ExcelDna.IntelliSense64.xll) add-in.
+You then provide function descriptions in:
+* a special (possibly hidden) worksheet,
+* an extra file next to the workbook or add-in with the descriptions in xml format, or
+* the same xml format information saved in the 'CustomXML' properties of the workbook.
 
 #### Create function descriptions worksheet
 
@@ -74,8 +77,8 @@ Details of the sheet format are:
   * Argument2 description
   * etc.
  
-### Function descriptions xml file
-An alternate way to provide the function information to the IntelliSense add-in is with an xml file next to the workbook or add-in file.
+#### Function descriptions xml file
+Another way you can provide the function information to the IntelliSense add-in is with an xml file next to the workbook or add-in file.
 For a workbook with the name 'MyWorkbook.xlsm' the IntelliSense file must be named 'MyWorkbook.intellisense.xml'.
 
 The contents of the xml file, matching the above example worksheet, would be
@@ -107,7 +110,33 @@ The contents of the xml file, matching the above example worksheet, would be
 </IntelliSense>
 ```
 
-#### Download the ExcelDna.IntelliSense(64).xll add-in
+#### Function descriptions xml in CustomXML part
+
+A third options for providing the function description details is to add the xml content as a `CustomXMLPart` of the workbook.
+
+This snippet can be used to embed the xml file in a workbook:
+
+```vb
+Sub EmbedIntelliSense()
+
+    Dim strFilename As String
+    Dim strFileContent As String
+    Dim iFile As Integer
+    
+    strFilename = "C:\Path\To\VBAFunctions.IntelliSense.xml"
+    iFile = FreeFile
+    Open strFilename For Input As #iFile
+    strFileContent = Input(LOF(iFile), iFile)
+    Close #iFile
+    
+    Debug.Print strFileContent
+    
+    ThisWorkbook.CustomXMLParts.Add strFileContent
+
+End Sub
+```
+
+### Download the ExcelDna.IntelliSense(64).xll add-in
 
 The newest release of the IntelliSense add-in can be found here:
 https://github.com/Excel-DNA/IntelliSense/releases
@@ -130,13 +159,18 @@ Sub RegisterMacroOptions()
     Dim rowi As Integer
     Dim coli As Integer
     Dim args As Integer
-    
+
+    Dim category As String
     Dim functionName As String
     Dim functionDescription As String
     Dim helpTopic As String
     Dim ArgDescriptions() As String
     
     Set ws = ThisWorkbook.Worksheets("_IntelliSense_")
+    category = ws.Cells(1, 3)
+    If category = "" Then
+        category = ThisWorkbook.Name
+    End If
     
     rowi = 2
     
