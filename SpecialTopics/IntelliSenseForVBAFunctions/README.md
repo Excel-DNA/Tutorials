@@ -4,6 +4,7 @@ This tutorial shows you how to enable in-sheet IntelliSense help for VBA Functio
 
 ```vb
 Function TempFahrenheit(tempInCelsius)
+...
 ```
 
 ![IntelliSense in action](https://user-images.githubusercontent.com/414659/100517124-37bbb700-3191-11eb-8c3b-8125322a6f63.gif)
@@ -225,3 +226,9 @@ End Sub
 ```
 
 The end result is a workbook or add-in that has in-sheet IntelliSense when the `ExcelDna.IntelliSense(64).xll` add-in is loaded, and also shows  the fucntion descriptions in the Excel `Function Arguments` dialog.
+
+## Conclusion
+
+We've shown how to add in-sheet IntelliSense for VBA functions using the Excel-DNA IntelliSense add-in.
+
+More information about the Excel-DNA IntelliSense add-in, including details on how to use it with .NET-based Excel-DNA add-ins see the [IntelliSense Github Repository](https://github.com/Excel-DNA/IntelliSense).
