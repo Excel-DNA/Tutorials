@@ -40,6 +40,16 @@ To enable in-sheet help for UDFs, I developed the Excel-DNA IntelliSense extensi
 
 You can find more details about the extension at the [Excel-DNA IntelliSense GitHub site](https://github.com/Excel-DNA/IntelliSense), but here I will focus on the use for VBA functions.
 
+### Download the ExcelDna.IntelliSense(64).xll add-in
+
+The newest release of the IntelliSense add-in can be found here:
+https://github.com/Excel-DNA/IntelliSense/releases
+
+You need to check whether your version of Excel is a 32-bit or 64-bit version, then download the matching .xll file.
+To test you can just follow File -> Open and select the .xll file. Installing the add-in so that it opens automatically can be done in the `Alt+t, i` Add-Ins dialog - also at File -> Options -> Add-Ins, Manage: Excel add-ins.
+
+### Example functions
+
 I will use these VBA functions as an example:
 
 ```vb
@@ -145,14 +155,6 @@ Sub EmbedIntelliSense()
 End Sub
 ```
 
-### Download the ExcelDna.IntelliSense(64).xll add-in
-
-The newest release of the IntelliSense add-in can be found here:
-https://github.com/Excel-DNA/IntelliSense/releases
-
-You need to check whether your version of Excel is a 32-bit or 64-bit version, then download the matching .xll file.
-To test you can just follow File -> Open and select the .xll file. Installing the add-in so that it opens automatically can be done in the `Alt+t, i` Add-Ins dialog - also at File -> Options -> Add-Ins, Manage: Excel add-ins.
-
 
 ### Application.MacroOptions
 
@@ -210,22 +212,9 @@ Sub RegisterMacroOptions()
 End Sub
 ```
 
-We have to decide when to run this registration code. For normal workbooks, we can run in the `Workbook_Open` event of the ThisWorkbook object.
+After running this routine, the descriptions will be saved together with the workbook. So you only have to run the routine again to update the descriptions.
 
-``` vb
-Private Sub Workbook_Open()
-    RegisterMacroOptions
-End Sub
-```
-
-But if we save the workbook as an add-in (as an .xlam file), we need to move it to the `Workbook_AddInInstall` event:
-```vb
-Private Sub Workbook_AddinInstall()
-    RegisterMacroOptions
-End Sub
-```
-
-The end result is a workbook or add-in that has in-sheet IntelliSense when the `ExcelDna.IntelliSense(64).xll` add-in is loaded, and also shows  the fucntion descriptions in the Excel `Function Arguments` dialog.
+The end result is a workbook or add-in that has in-sheet IntelliSense when the `ExcelDna.IntelliSense(64).xll` add-in is loaded, and also shows the function descriptions in the Excel `Function Arguments` dialog.
 
 ## Conclusion
 
