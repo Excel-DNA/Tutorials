@@ -2,7 +2,14 @@
 
 This tutorial shows you how to enable in-sheet IntelliSense help for VBA Functions.
 
+```vb
+Function TempFahrenheit(tempInCelsius)
+```
+
 ![IntelliSense in action](https://user-images.githubusercontent.com/414659/100517124-37bbb700-3191-11eb-8c3b-8125322a6f63.gif)
+
+
+## Background
 
 When you edit a formula on a worksheet, Excel has two mechanisms to assist you in entering the right function call information.
 
