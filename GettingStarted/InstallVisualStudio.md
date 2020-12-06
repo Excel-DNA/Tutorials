@@ -1,6 +1,10 @@
 # Install Visual Studio
 
-[Visual Studio](https://visualstudio.microsoft.com) is the integrated development environment (IDE) used to develop .NET application and libraries, including Excel-DNA add-ins developed with .NET.
+[Visual Studio](https://visualstudio.microsoft.com) is the integrated development environment (IDE) used to develop .NET application and libraries, including Excel-DNA add-ins developed with .NET. I've made a step-by-step video guide that you can find on YouTube.
+
+[![Excel-DNA - Install Visual Studio](http://img.youtube.com/vi/M-9jsOXVw_o/0.jpg)](http://www.youtube.com/watch?v=M-9jsOXVw_o "Excel-DNA and Dynamic Arrays")
+
+Some notes are below.
 
 ### Notice the different 'Visual Studio' products and editions
 
