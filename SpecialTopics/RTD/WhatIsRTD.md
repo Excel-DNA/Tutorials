@@ -10,6 +10,7 @@ I can think of some reasons why the RTD feature of Excel is not so well known:
 * There are no built-in RTD data sources that ship with Office. There are only available from as part of third-party add-ins.
 * RTD Servers cannot be created in VBA, so they need another environment like C++ or .NET to create.
 * The COM-based nature of RTD means there are a few things to learn and take care with when making RTD Servers.
+* Registration of RTD server normally requires administrator permissions
 
 Despite the challenges in getting to know RTD, it is a very powerful feature of Excel that is closely integrated into the Excel calculation engine. Hence, it provides a foundation on which various high-level features can be built. But let me not run ahead of myself.
 
@@ -43,19 +44,35 @@ We can now trace the interaction sequence between Excel and an RTD Server.
 A basic call sequence might look like this
 ![RTD Call Sequence](https://user-images.githubusercontent.com/414659/104023185-f2e06280-51c9-11eb-9873-ab66cd07dae5.png)
 
-## `ExcelRtdServer` helper class in Excel-DNA
 
-Excel-DNA contains a base class that 
+
+## ExcelRtdServer helper class in Excel-DNA
+
+The Excel-DNA library contains a base class that can ease the implementation of an RTD server.
+
+* Allows wrapper function that performs just-in-time registration of the RTD Server.
+* Tracks Topic values and manages the conversion to Excel data types.
+* Ensures callbacks to Excel follow the COM rules, allowing the RTD Server to update topics from any thread, at any frequency.
+
+The call pattern then becomes a bit simpler
+
 
 
 ## Building on RTD
 
 
-Some of the features of RTD:
-* High throughput to support many data items, and high update rates
-* High performance updates that do not interfere with the user's interaction with Excel
-* 
 
+
+## Further notes
+
+For Excel 365 versions there were important performance improvements made around late 2019. These include supporting RTD as a thread-safe function and improving the internal update performance in Excel. This will allow future versions of Excel-DNA to support thread-safe RTD wrapper functions.
+
+These are some of the features of RTD that make it a uniquely powerful update feature for Excel.
+* High throughput to support many data items, and high update rates
+* Updates do not interfere with the user's interaction with Excel
+* Reliable tracking of formula locations, with notification when a data item is no longer referenced
+
+Alternative approaches like using the COM object model to update a workbook are far more limited.
 
 ## References
 
