@@ -32,13 +32,9 @@ namespace TimerRTD
             if (sourceName == "WAVE")
             {
                 // Figure out the other topic parameters, which are strings in the topicInfo list.
-                double amplitude = 1;
-                double frequency = 1;
-                if (topicInfo.Count >= 3)
-                {
-                    double.TryParse(topicInfo[1], out amplitude);
-                    double.TryParse(topicInfo[2], out frequency);
-                }
+                // No error - assume we have two extra topic strings and they are numbers
+                double.TryParse(topicInfo[1], out double amplitude);
+                double.TryParse(topicInfo[2], out double frequency);
                 var source = new WaveDataSource(amplitude, frequency);
                 source.NewValue += val => topic.UpdateValue(val);
                 _dataSources[topic] = source;
