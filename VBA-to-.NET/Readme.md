@@ -5,8 +5,6 @@ The **VBA to .NET** series discusses topics that might be of particular interest
 * How to perform common tasks in .NET where the libraries and code would be quite different to those used in VBA.
 * How to structure projects in .NET to use the code in a variety of ways - different platforms, in a cloud-hosted setting, or as an Excel add-in.
 
-### Web Request Basics
+### [Web Request Basics](WebRequestBasics/Readme.md)
 
-A common programming task is to retrieve some information from a remote system via an HTTP web request. This might be very easy or very difficult depending on the nature of the remote system, the type of data to be retrieved, the amount of processing required and the way the data will then be used. So this is quite a big topic.
-
-This tutorial gives a high-level view of how to aprroach this task, an example of how to get started with the simple case, and some pointers on where to look further.
+A common programming task is to retrieve some information from a remote system via an HTTP web request. This tutorial gives a high-level view of how to aprroach this task, an example of how to get started with the simple case, and some pointers on where to look further.
