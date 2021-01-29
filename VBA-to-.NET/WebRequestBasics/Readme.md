@@ -49,8 +49,19 @@ The **Use** aspect concerns the specific way we will run and use the client libr
 
 Generally the programming tools needed in the **Use** aspects are different and independent of those needed in the web-related client library. Results of the web requested data might be used from console applications or scripts (which are easy to automate), from Excel add-ins where the are directed by end-users  or for storing in databases, which in turn might be on a local (like an Access, SQLite or SQL Server database), on a network or internet hosted service.
 
+### Notes on program style
 
-### Interfaces and abstraction
+There are some questions of program structure and style that I think are relevant to the topic and examples, so I'll mention these briefly.
+
+#### Using and exposing asynchronous calls
+
+Since web request mostly cross machine and often large geographic boundaries, they tend to have high latency, so a program that is making such requests will spend a lot of time (in computing terms) just waiting for the next response.
+
+Writing programs that are well structured but still interact well with such high-latency calls was historically quite difficult. But the excellent async/await programming model developed in .NET and now used in most programming platforms makes this kind of programming much easier. Async programming is another important topic to cover in the VBA to .NET context.
+
+I recommend that the wrapper client library also expose async methods, as these can easily be consumed both in settings where the async aspect is useful, and in places where a synchronous interface is better suited. So I will also follow that pattern in the example here.
+
+#### Interfaces and abstraction
 
 One question that might arise in structuring such a project is whether to have an abstract interface that defines the abilities and usage for an `XyzClient`, maybe an `IWebClient` interface. This would allow various clients to be interchanged as components in various useage scenarios. 
 
@@ -62,26 +73,27 @@ I will not be adding this complexity in the examples here.
 
 The web request client library often deals with external systems, which make automated testing more difficult. It can help to at least have a simple console program that uses the client library, as a way of using and testing the library witout the larger environment and other components involved. Conversely, for some projects it will help to have a mode or a mock version of the library that can be used to provide predictable results for automated test purposes, so that the mock version can be used instead of the real web requests in an automated test setting.
 
-#### A note on using async calls
-
-Since web request mostly cross machine and often large geographic boundaries, they tend to have high latency, so a program that is making such requests will spend a lot of time (in computing terms) just waiting for the next response.
-
-Writing programs that are well structured but still interact well with such high-latency calls was historically quite difficult. But the excellent async/await programming model developed in .NET and now used in most programming platforms makes this kind of programming much easier. Async programming is another important topic to cover in the VBA to .NET context.
-
-I recommend that the wrapper client library also expose async methods, as these can easily be consumed both in settings where the async aspect is useful, and in places where a synchronous interface is better suited. So I will also follow that pattern in the example here.
 
 ## The simplest thing that might work
 
 
 
+### Fetch
 
 
- 
+### Process
+
+### ***Use** from a console runner
+
+### ***Use** from an Excel add-in
+
 
 ## Complications galore!
 
+While the basic case is quite easy to make work, web request programming can become very difficult and lead to great frustration. In the section I give some glimpse of the ladder of complexity one might climb down, and some pointers to the tools that might be useful along the way.
 
 ### Fetching
+
 
 
 ### Processing
