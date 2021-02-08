@@ -1,6 +1,6 @@
  # VBA to .NET: Web Request Basics
  
- A common programming task is to retrieve some information from a remote system via an HTTP web request. This might be very easy or very difficult depending on the nature of the remote system, the type of data to be retrieved, the amount of processing required and the way the data will then be used. So this is a large topic.
+A common programming task is to retrieve some information from a remote system via an HTTP web request. This might be very easy or very difficult depending on the nature of the remote system, the type of data to be retrieved, the amount of processing required and the way the data will then be used. So overall this is a large topic, but we can often get started without too much trouble.
 
 This tutorial gives a high-level view of how to aproach this task, an example of how to get started with the simple case, and some pointers on where to look further.
 
@@ -74,8 +74,10 @@ I will not be adding this complexity in the examples here.
 The web request client library often deals with external systems, which make automated testing more difficult. It can help to at least have a simple console program that uses the client library, as a way of using and testing the library witout the larger environment and other components involved. Conversely, for some projects it will help to have a mode or a mock version of the library that can be used to provide predictable results for automated test purposes, so that the mock version can be used instead of the real web requests in an automated test setting.
 
 
-## The simplest thing that might work
+## An example client library for OpenWeather
 
+As an example, let's have a look at the OpenWeather website, and how we could access the information from a .NET library.
+There is an open-source library that already 
 
 
 ### Fetch
@@ -89,6 +91,7 @@ The web request client library often deals with external systems, which make aut
 
 
 ## Complications galore!
+I should mention that there is an open-source library that wraps 
 
 While the basic case is quite easy to make work, web request programming can become very difficult and lead to great frustration. In the section I give some glimpse of the ladder of complexity one might climb down, and some pointers to the tools that might be useful along the way.
 
@@ -102,3 +105,7 @@ While the basic case is quite easy to make work, web request programming can bec
 Single values
 Tables
 Download files
+
+### F# library and discussion
+https://simontreanor.github.io/blog/20210205_FunStripe.html
+
