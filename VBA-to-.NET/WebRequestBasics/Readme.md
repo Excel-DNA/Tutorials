@@ -90,7 +90,10 @@ There is an open-source library that already
 ### ***Use** from an Excel add-in
 
 
-## Complications galore!
+## Getting sophisticated and complications galore!
+
+
+
 I should mention that there is an open-source library that wraps 
 
 While the basic case is quite easy to make work, web request programming can become very difficult and lead to great frustration. In the section I give some glimpse of the ladder of complexity one might climb down, and some pointers to the tools that might be useful along the way.
