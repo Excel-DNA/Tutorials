@@ -1,6 +1,6 @@
  # VBA to .NET: Web Request Basics
  
-A common programming task is to retrieve some information from a remote system via an HTTP web request. This might be very easy or very difficult depending on the nature of the remote system, the type of data to be retrieved, the amount of processing required and the way the data will then be used. So overall this is a large topic, but we can often get started without too much trouble.
+A common programming task is to retrieve some information from a remote system via an HTTP web request. Whether this is a very easy or a more difficult task depends on the nature of the remote system, the type of data to be retrieved, the amount of processing required and the way the data will then be used. So overall this is a large topic, but at least we can often get started without too much trouble.
 
 This tutorial gives a high-level view of how to aproach this task, an example of how to get started with the simple case, and some pointers on where to look further.
 
@@ -11,7 +11,7 @@ I use the term 'web-based resource' for any information that can be accessed via
 * web-based services that can be accessed with an HTTP-based API,
 * internal services in a company, or even running on the same machine where it will be accessed.
 
-(While I won't discuss it further here, other protocols like FTP might also be required to access web resources.)
+(While I won't discuss it further here, other protocols like FTP might also be required to access internet-based resources.)
 
 There is a huge variety of web-based resources, and reasons for wanting to access these resources. For example:
 * gather data from a web site into an Excel spreadsheet for further analysis or custom reporting,
@@ -73,12 +73,25 @@ I will not be adding this complexity in the examples here.
 
 The web request client library often deals with external systems, which make automated testing more difficult. It can help to at least have a simple console program that uses the client library, as a way of using and testing the library witout the larger environment and other components involved. Conversely, for some projects it will help to have a mode or a mock version of the library that can be used to provide predictable results for automated test purposes, so that the mock version can be used instead of the real web requests in an automated test setting.
 
+## Simple fetch from an http url
+
+Let's start with the simplest case, where we just want to read a string from an http request.
+The key class for this purpose in .NET is called [`HttpClient`](https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=netframework-4.8). (There is an older `WebClient` class, which has mostly been deprecated.)
+
+An important aspect of using `HttpClient` for web requests is to not make a new instance of the `HttpClient` class for each request. Rather think of an `HttpClient` as a mini-browser that you control with code, and then ask it to make verious requests. We'll keep an instance of `HttpClient` in our `Module` (similar to a `static` variable in C#) and then have the web request method use the single instance.
+
+So a simple module that uses an `HttpClient` might look like this:
+
+```vb
+
+```
 
 ## An example client library for OpenWeather
 
-As an example, let's have a look at the OpenWeather website, and how we could access the information from a .NET library.
+As a more representative example, let's have a look at the OpenWeather website, and how we could access the information from a .NET library.
 There is an open-source library that already 
 
+ The OpenWeather site makes available a web request API, which makes it easier to retrieve the data from a program, rether than having to understand the html markup normally rendered in a browser.
 
 ### Fetch
 
