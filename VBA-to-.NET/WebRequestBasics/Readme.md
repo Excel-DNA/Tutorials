@@ -1,6 +1,6 @@
  # VBA to .NET: Web Request Basics
  
-A common programming task is to retrieve some information from a remote system via an HTTP web request. Whether this is a very easy or a more difficult task depends on the nature of the remote system, the type of data to be retrieved, the amount of processing required and the way the data will then be used. So overall this is a large topic, but at least we can often get started without too much trouble.
+A common programming task is to retrieve some information from a remote system via an HTTP web request. This might be ease or difficult depending on the nature of the remote system, the type of data to be retrieved, the amount of processing required and the way the data will then be used. Overall this is a large topic, but at least we can often get started without too much trouble.
 
 This tutorial gives a high-level view of how to aproach this task, an example of how to get started with the simple case, and some pointers on where to look further.
 
@@ -24,6 +24,21 @@ This tutorial is not meant as a comprehensive guide to this wide range of cases,
 * give a high-level view of the web-request topic, helping to strucutre your thoughts and programs when taking on such a task,
 * provide a basic example of how to go about the simple case,
 * explain the varous ways in which things become complicated, and point to resources that might help.
+
+## A note about web requests from Excel and VBA
+
+Web requests can be made from Excel directly or using VBA in various ways. I list a few:
+* [`WEBSERVICE` function](https://support.microsoft.com/en-us/office/webservice-function-0546a35a-ecc6-4739-aed7-c0b7ce1562c4)
+* Excel [`QueryTables`](https://docs.microsoft.com/en-us/office/vba/api/excel.querytable.webtables) with a direct http connection
+* Using the `MSXML2.ServerXMLHTTP` or  `MSXML2.XMLHTTP60` COM class from VBA
+* Using the `WinHttp.WinHttpRequest.5.1` COM class from VBA
+* Automate Internet Explorer from VBA
+* Use the Selenium web driver to automate any browser from VBA
+
+Google Sheets also has some handy functions to get web request data into the sheet:
+* [`importHTML`](https://support.google.com/docs/answer/3093339)
+* [`importXML`](https://support.google.com/docs/answer/3093342)
+* [`importDATA`](https://support.google.com/docs/answer/3093335)
 
 ## Bird's eye view
 
@@ -83,6 +98,7 @@ An important aspect of using `HttpClient` for web requests is to not make a new 
 So a simple module that uses an `HttpClient` might look like this:
 
 ```vb
+
 
 ```
 
