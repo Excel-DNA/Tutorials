@@ -141,3 +141,6 @@ Download files
 ### F# library and discussion
 https://simontreanor.github.io/blog/20210205_FunStripe.html
 
+
+### More about web scraping
+https://mihaisplace.blog/2021/10/03/the-state-of-web-scraping-in-2021/
