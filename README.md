@@ -13,6 +13,7 @@ Tutorial content and sample projects for Excel-DNA.
 ### Special Topics
 * [Dynamic Arrays](SpecialTopics/DynamicArrays)
 * [IntelliSense for VBA Functions](SpecialTopics/IntelliSenseForVBAFunctions)
+* [RTD](SpecialTopics/RTD)
 
 ### Testing
 * [Testing Helper Introduction](Testing)
