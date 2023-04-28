@@ -80,7 +80,7 @@ The function correctly gets the full (and dynamically resized) array when passed
 
 If the input parameter is type `object`, Excle may pass a single value or array.
 And if the parameter is marked as `AllowReference=true` we might get a sheet reference in the form of an `ExcelReference` object.
-This function shows the eact type and details of the input.
+This function shows the exact type and details of the input.
 ```cs
     [ExcelFunction(IsMacroType =true)] // IsMacroType is only required for the handl xlfReftext call below.
     public static string dnaDescribe([ExcelArgument(AllowReference = true)] object arg)
