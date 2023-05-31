@@ -237,7 +237,7 @@ The test methods can execute in two environments:
 
 * Inside the Excel process (the default) - The test runner will load a helper add-in (called ExcelAgent) into the Excel process, and ExcelAgent in turn will load the test library. Test will then run inside the Excel process, which improves performance and gives access to the the Excel C API - `XlCall.Excel(...)` - from the test code.
 
-* Out-of-Process  - There is also an option to run tests out-of-process. This is indicated by setting the `OutOfProcess` property of the `ExcelFact` or `ExcelSettings` attribute on the methopd or class respectively. In this case the test assembly will run inside the xUnit test runner and communicate with Excel via the stardard cross-process COM interop. In this approach there is no additional test agent loaded into the Excel process.
+* Out-of-Process  - There is also an option to run tests out-of-process. This is indicated by setting the `OutOfProcess` property of the `ExcelFact` or `ExcelSettings` attribute on the method or class respectively. In this case the test assembly will run inside the xUnit test runner and communicate with Excel via the stardard cross-process COM interop. In this approach there is no additional test agent loaded into the Excel process.
 
 ### Error values - COM vs C API
 
