@@ -2,6 +2,7 @@
 using Xunit;
 using ExcelDna.Testing;
 using Microsoft.Office.Interop.Excel;
+using ExcelDna.Integration;
 
 // This attribute MUST be present somewhere in the test project to connect xUnit to the ExcelDna.Testing framework.
 // It could also be placed in the Properties\AssemblyInfo.cs file.
@@ -36,7 +37,7 @@ namespace Sample.Test
         [ExcelFact]
         public void ExcelCanAddNumbers()
         {
-            var ws = _testWorkbook.Sheets[1];
+            Worksheet ws = (Worksheet) _testWorkbook.Sheets[1];
 
             ws.Range["A1"].Value = 2.0;
             ws.Range["A2"].Value = 3.0;
@@ -52,7 +53,7 @@ namespace Sample.Test
         [ExcelFact]
         public void AddInCanAddNumbers()
         {
-            var ws = _testWorkbook.Sheets[1];
+            Worksheet ws = (Worksheet) _testWorkbook.Sheets[1];
 
             ws.Range["A1"].Value = 2.0;
             ws.Range["A2"].Value = 3.0;
@@ -70,7 +71,7 @@ namespace Sample.Test
         {
             // Get the pre-loaded workbook using the Util.Workbook property
             var wb = Util.Workbook;
-            var ws = wb.Sheets["Check"];
+            Worksheet ws = (Worksheet) wb.Sheets["Check"];
             Util.Application.CalculateFull();
 
             var result = ws.Range["A1"].Value;
