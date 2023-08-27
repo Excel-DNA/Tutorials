@@ -1,16 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net472</TargetFrameworks>
+		<TargetFrameworks>net472;net6.0-windows</TargetFrameworks>
+    <UseWPF>true</UseWPF>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ExcelDna.Addin" Version="1.6.0" />
-		<PackageReference Include="ExcelDna.Testing" Version="1.6.0" />
+		<PackageReference Include="ExcelDna.Addin" Version="*-*" />
+		<PackageReference Include="ExcelDna.Testing" Version="*-*" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <Folder Include="Properties\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="TestBook.xlsx">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 </Project>
