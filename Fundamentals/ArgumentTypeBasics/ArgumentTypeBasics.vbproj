@@ -4,9 +4,5 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="ExcelDna.Addin" Version="*-*" />
-		<PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
-	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Properties\" />
 	</ItemGroup>
 </Project>
